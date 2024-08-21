@@ -12,6 +12,9 @@ import logging
 from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
 import utils.my_emojis as my_emojis
+import os
+import dotenv
+dotenv.load_dotenv()
 
 class ArxAI(commands.Cog):
     def __init__(self, bot, embed_color):
@@ -59,7 +62,7 @@ You have access to chat history, input message. keep your message short.
 
         if message.content.startswith(f"<@{self.bot.user.id}>") or self.bot.user.mentioned_in(message):
             try:
-                llm = ChatGroq(model="llama3-8b-8192", temperature=0.9, api_key="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")
+                llm = ChatGroq(model="llama3-8b-8192", temperature=0.9, api_key=os.getenv("GROQ_API_KEY"))
                 history = ChatMessageHistory()
                 history.add_user_message(message.content)
                 response = llm.invoke(SYSTEM_PROMPT+message.content)
@@ -101,7 +104,7 @@ Keep your responses under 4 sentences / 4 lines.
         for message in history_messages:
             history.append(message.content)
         
-        llm = ChatGroq(model="mixtral-8x7b-32768", temperature=0.9, api_key="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")
+        llm = ChatGroq(model="mixtral-8x7b-32768", temperature=0.9, api_key=os.getenv("GROQ_API_KEY"))
         response = llm.invoke(f"Here are some messages: {history}\nAnd here is the summary prompt\n{SUMMARY_PROMPT}")
 
         embed = discord.Embed(title=f"{my_emojis.PREFIX} Summary for the last {messages} messages", color=discord.Color.from_str(self.embed_color))
