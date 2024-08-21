@@ -28,6 +28,9 @@ import cogs.arx_quote
 import cogs.arx_meme
 import cogs.arx_levels
 import cogs.arx_ai
+import cogs.arx_find
+
+
 import utils.db_funcs as db_funcs
 from dotenv import load_dotenv
 
@@ -144,6 +147,7 @@ async def on_ready():
     await bot.add_cog(cogs.arx_meme.MemeCog(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_levels.Levels(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_ai.ArxAI(bot, EMBED_COLOR))
+    await bot.add_cog(cogs.arx_find.Find(bot, EMBED_COLOR))
 
 
 # ERROR HANDLING
