@@ -1,3 +1,5 @@
+#J_COLDTAPWATER, VERSION 1.3.3
+
 import discord
 from discord import Button, ui
 from discord.ui import View, Button, TextInput, Modal
@@ -37,7 +39,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logging.warning("Starting up...")
 
-
+#INTENTS
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -47,17 +49,24 @@ intents.emojis = True
 intents.emojis_and_stickers = True
 intents.guilds = True
 
+
+#PREFIX
 bot = commands.Bot(command_prefix=["r ", "R ", "- "], intents=intents)
-# bot = commands.Bot(command_prefix=["t$ "], intents=intents)
+
+
+# bot = commands.Bot(command_prefix=["t$ "], intents=intents) # USED FOR TESTING
+
+#RANDOM CONFIG STUFF
 EMBED_COLOR = "#2a2d31"
 CURRENCY = "buckaroos"
 GAMBLE_BONUS = 1.25
 DEP = 0.7
 home_server_id = 1254445778466898003
 bot_owner_id = 1151230208783945818
+#^ WILL BE MOVED LATER
 
 
-# TO DO: add emojis
+#BASIC EMOJIS
 BANK_EMOJI = my_emojis.BANK_EMOJI
 WALLET_EMOJI = my_emojis.WALLET_EMOJI
 CROWN_EMOJI = my_emojis.CROWN_EMOJI
@@ -81,11 +90,6 @@ ETERNAL = my_emojis.ETERNAL
 
 BOT_OWNER = my_emojis.BOT_OWNER
 SUPPORTER = my_emojis.SUPPORTER
-TAX_PAYER = my_emojis.TAX_PAYER
-
-# FUNCTIONS
-PASSWORD = "arxisthebest123"
-
 
 # FUNCTIONS
 
@@ -122,7 +126,6 @@ async def humanize_currency(amount):
     return str(amount)
 
 # BOT EVENTS
-
 @bot.event
 async def on_ready():
     logging.info(f"Bot is ready! -- {bot.user}")
@@ -143,7 +146,7 @@ async def on_ready():
     await bot.add_cog(cogs.arx_ai.ArxAI(bot, EMBED_COLOR))
 
 
-
+# ERROR HANDLING
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -181,30 +184,7 @@ async def on_command_error(ctx, error):
         raise error
 
 
-
-@bot.event
-async def on_message(message):
-    if message.author.bot:
-        return
-
-    whats = ["wot", "what", "wat", "wha", "wut", "wut?"]
-    if message.content.lower() in whats:
-        # Grab the previous message
-        async for previous_message in message.channel.history(limit=2):
-            # Ignore the current message
-            if previous_message.id != message.id:
-                # Send a response
-                await message.channel.send(
-                    f"{my_emojis.PREFIX} **{previous_message.author}** SAID **{previous_message.content}**! jeez get better ears smh"
-                )
-                break
-
-    # Don't forget to process commands if you have any commands in your bot
-    await bot.process_commands(message)
-
-
-
-
+# OWNER COMMANDS
 @bot.hybrid_command()
 @commands.is_owner()
 async def addmoney(ctx, member: discord.Member, amount: int):
@@ -305,26 +285,9 @@ async def balance(ctx, member: discord.Member = None):
 
 
 
-# ECONOMYCOMMANDS
-""" @bot.hybrid_command()
-async def balance(ctx, member: discord.Member = None):
-    if member is None:
-        member = ctx.author
-    user_id = member.id
-    user_data = await db_funcs.get_user_data(user_id)
-    if user_data is None:
-        await db_funcs.save_user_data(user_id, 0, 0, 0)
-        user_data = (0, 0, 0)
-    wallet, bank, gems = user_data
-    await db_funcs.save_user_data(user_id, wallet, bank, gems)
-    embed = discord.Embed(title=f"{member}'s balance", color=discord.Color.from_str(EMBED_COLOR))
-    embed.add_field(name=f"{WALLET_EMOJI} Wallet", value=f"{wallet} {CURRENCY}")
-    embed.add_field(name=f"{BANK_EMOJI} Bank", value=f"{bank} {CURRENCY}")
-    embed.add_field(name=f"{GEMS} Gems", value=f"{gems} Gems")
-    embed.set_thumbnail(url=member.display_avatar.url)
-    embed.set_footer(text=f"Net Worth: {wallet+bank} {CURRENCY}")
-    await ctx.send(embed=embed) """
+# ECONOMY COMMANDS
 
+#STRATEGICALLY CHOOSE ALIASES FOR HYBRID COMMANDS; MAKE SURE THEY DO NOT OVERLAP WITH OTHER HYBRID COMMANDS
 @bot.hybrid_command()
 async def deposit(ctx, amount: str):
     user_id = ctx.author.id
@@ -1347,9 +1310,6 @@ async def upgrades(ctx):
     
     await ctx.send(embed=embed, view=view)
 
-import discord
-from discord.ui import View, Button, Modal, TextInput
-import random
 
 class NumberBetModal(Modal):
     def __init__(self, user_id, bet, bot):
@@ -1441,54 +1401,7 @@ async def roulette(ctx, bet: int):
     await ctx.send(embed=embed, view=view)
 
 
-
-
-@bot.command()
-@commands.cooldown(1, 7886000, commands.BucketType.user)
-async def gimme(ctx):
-    
-    await ctx.send(f"{my_emojis.PREFIX} What is the password for this command?")
-    await bot.wait_for("message", check=lambda message: message.author == ctx.author and message.content == PASSWORD)
-    random_number = random.randint(1, 1000000)
-    user_data = await db_funcs.get_user_data(str(ctx.author.id))
-
-    if user_data is None:
-        await db_funcs.save_user_data(str(ctx.author.id), 0, 0, 0)
-
-    wallet, bank, gems = map(int, user_data)
-
-    await db_funcs.save_user_data(str(ctx.author.id), wallet + random_number, bank, gems)
-
-    await ctx.send(f"{my_emojis.PREFIX} {ctx.author.mention} You got {random_number} buckaroos!")
-
-@bot.command()
-@commands.cooldown(1, 7886000, commands.BucketType.user)
-async def taxrefund(ctx):
-    await ctx.send(f"{my_emojis.PREFIX} What is the password for this command?")
-    await bot.wait_for("message", check=lambda message: message.author == ctx.author and message.content == PASSWORD)
-    user_data = await db_funcs.get_user_data(str(ctx.author.id))
-    random_number = random.randint(1, 10000000)
-
-    if user_data is None:
-        await db_funcs.save_user_data(str(ctx.author.id), 0, 0, 0)
-
-    wallet, bank, gems = map(int, user_data)
-
-    await db_funcs.save_user_data(str(ctx.author.id), wallet, bank + wallet, gems)
-
-    await ctx.send(f"{my_emojis.PREFIX} {ctx.author.mention} You got {random_number} buckaroos from your tax refund!")
-
-  
-@bot.hybrid_command()
-async def heist(ctx):
-    await ctx.send(f"{my_emojis.ERROR} we cants do a hesit yet! we must be patient...")
-
-
-
 # UTILITIES
-
-
-
 @bot.hybrid_command()
 async def ping(ctx):
     await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
@@ -1505,9 +1418,6 @@ async def info(ctx):
     embed.set_thumbnail(url=bot.user.display_avatar.url)
 
     await ctx.send(embed=embed)
-
-
-
 
 @bot.hybrid_command()
 async def avatar(ctx, member: discord.Member = None):
@@ -1620,19 +1530,6 @@ async def helpme(ctx):
         .add_field(name="/hangman", value="Starts a game of Hangman in the channel the command is run in.", inline=False)
         .add_field(name="/roulette <bet: int>", value="Starts a game of Roulette with the specified bet. The higher the bet, the higher the payout.", inline=False)
         .add_field(name="/adventure", value="Starts a game of adventure in the channel the command is run in.", inline=False),
-
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Admin Commands - Page 1", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="/ban <member: @mention> [reason]", value="Bans the specified member from the server. Optional reason can be provided.", inline=False)
-        .add_field(name="/kick <member: @mention> [reason]", value="Kicks the specified member from the server. Optional reason can be provided.", inline=False)
-        .add_field(name="/purge <amount>", value="Deletes the specified amount of messages in the channel the command is run in.", inline=False)
-        .add_field(name="/timeout <member: @mention> <duration> [reason]", value="Times out the specified member for the specified duration. Minimum duration is 60 seconds. ", inline=False)
-        .add_field(name="/createrole <role_name>", value="Creates a new role with the specified name.", inline=False)
-        .add_field(name="/deleterole <role: @mention>", value="Deletes the specified role from the server.", inline=False)
-        .add_field(name="/assignrole <member: @mention> <role: @mention>", value="Assigns the specified role to the specified member.", inline=False)
-        .add_field(name="/removerole <member: @mention> <role: @mention>", value="Removes the specified role from the specified member.", inline=False),
-
-
     ]
 
     view = HelpView(embeds)
@@ -1659,6 +1556,7 @@ async def addbot(ctx):
 
 
 
+# SOME MORE OWNER COMMANDS
 @bot.hybrid_command()
 @commands.is_owner()
 async def sync(ctx):
@@ -1696,7 +1594,6 @@ async def economy(ctx):
     buckaroos = c.fetchone()[0]
     embed = discord.Embed(title="Economy", description=f"Total buckaroos in circulation: {await humanize_currency(buckaroos)}", color=discord.Color.from_str(EMBED_COLOR))
     await ctx.send(embed=embed)
-    
 
 
 
