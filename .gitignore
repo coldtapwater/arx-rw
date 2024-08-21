@@ -1,0 +1,9 @@
+.env
+!.env.example
+arx/
+*.pyc
+*.db
+*.json
+.vscode/
+venv/
+.venv/
