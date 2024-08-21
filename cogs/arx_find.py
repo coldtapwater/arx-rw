@@ -93,7 +93,10 @@ class Find(commands.Cog):
                     if data["items"]:
                         embed = discord.Embed(title=data["items"][0]["volumeInfo"]["title"], color=discord.Color.from_str(self.embed_color))
                         embed.add_field(name="Author", value=data["items"][0]["volumeInfo"]["authors"][0])
-                        embed.add_field(name="Description", value=data["items"][0]["volumeInfo"]["description"])
+                        desc = data["items"][0]["volumeInfo"]["description"]
+                        if len(desc) > 1024:
+                            desc = desc[:1021] + "..."
+                            embed.add_field(name="Description", value=desc)
                         embed.add_field(name="Rating", value=data["items"][0]["volumeInfo"]["averageRating"])
                         embed.set_thumbnail(url=data["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"])
     
