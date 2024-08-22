@@ -70,7 +70,7 @@ class Levels(commands.Cog):
         if message.author.bot:
             return
         
-        guild_id = str(message.guild.id)
+        guild_id = str(message.guild)
         user_id = str(message.author.id)
         
         async with aiosqlite.connect('bot.db') as db:

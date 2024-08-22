@@ -1,3 +1,5 @@
+# J_COLDTAPWATER, VERSION 0.2
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -70,7 +72,6 @@ You have access to chat history, input message. keep your message short.
             except Exception as e:
                 await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again. or use the `/contact` to bring this to the developer's attention")
                 logging.critical(e)
-        await self.bot.process_commands(message)
 
     @commands.hybrid_command()
     async def summarize(self, ctx, messages: int=20):
