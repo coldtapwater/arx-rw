@@ -6,7 +6,7 @@ import json
 import os
 import dotenv
 from serpapi import GoogleSearch
-
+import asyncio
 import groq
 
 from groq import Groq
@@ -16,6 +16,28 @@ dotenv.load_dotenv()
 
 omdb_api_key = os.getenv("OMDB_API_KEY")
 groq_api_key = os.getenv("GROQ_API_KEY")
+
+async def get_groq_response(name):
+    client = Groq()
+    MODEL = 'llama3-groq-70b-8192-tool-use-preview'
+    PROMPT =f"""
+
+
+
+"""
+    messages =[
+        {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
+
+            find: (name: {name}) => string
+                returns a brief summary of the of the item: {name}"""},
+        {"role": "user", "content": name}
+    ]
+    
+    response = client.chat.completions.create(
+        messages=messages,
+        model=MODEL
+    )
+    return response.choices[0].message.content
 
 class Find(commands.Cog):
     def __init__(self, bot, embed_color):
@@ -29,27 +51,8 @@ class Find(commands.Cog):
         """Find something on the internet."""
         # tool set up for groq ai
 
-        client = Groq()
-        MODEL = 'llama3-groq-70b-8192-tool-use-preview'
-        PROMPT =f"""
-
-
-
-"""
-        messages =[
-            {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
-
-                find: (name: {name}) => string
-                    returns a brief summary of the of the item: {name}"""},
-            {"role": "user", "content": name}
-        ]
         
-        response = client.chat.completions.create(
-            messages=messages,
-            model=MODEL
-        )
-        response_message = response.choices[0].message.content
-        await ctx.send(response_message + "<@" + str(ctx.author.id) + ">")
+        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
 
 
     @find.command()
@@ -69,7 +72,8 @@ class Find(commands.Cog):
     
                         await ctx.send(embed=embed)
                     else:
-                        await ctx.send(f"{my_emojis.ERROR} No results found.")
+                        await ctx.send(f"{my_emojis.ERROR} No results found. Trying to find something for you.")
+                        asycnio.sleep(5)
 
     @find.command()
     async def anime(self, ctx, *, name):
