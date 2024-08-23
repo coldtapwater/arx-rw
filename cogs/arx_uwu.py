@@ -44,7 +44,7 @@ def uwuify(text):
         screamed_words = []
         for word in words:
             if word.isupper():
-                screamed_words.append(f"*{word.lower()}* (・`ω´・) *screams*")
+                screamed_words.append(f"*{word.lower()}* \(・ω・)/ *screams*")
             else:
                 screamed_words.append(word)
         return ' '.join(screamed_words)

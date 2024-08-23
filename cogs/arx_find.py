@@ -6,6 +6,8 @@ import json
 import os
 import dotenv
 
+from langchain_groq import ChatGroq
+
 
 dotenv.load_dotenv()
 
@@ -21,10 +23,23 @@ class Find(commands.Cog):
     @commands.hybrid_group()
     async def find(self, ctx, *, name):
         """Find something on the internet."""
-        if ctx.invoked_subcommand is None:
-            await ctx.send(f"{my_emojis.ERROR} Invalid subcommand passed. Use `/find help` to see the available subcommands.")
-        else: 
-            await ctx.send(f"{my_emojis.ERROR} Invalid subcommand passed. Use `/find help` to see the available subcommands.")
+        # tool set up for groq ai
+        llm = ChatGroq(model="llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY"))
+
+        tool = {
+            "name": "search",
+            "description": "useful for when you need to answer questions about current events",
+            "api_key": os.getenv("GROQ_API_KEY"),
+            "tool": llm
+        }
+
+        tools = [tool]
+
+        llm = ChatGroq(model="llama3-8b-8192", api_key=os.getenv("GROQ_API_KEY"), tools=tools)
+
+        response = llm.invoke(f"Find {name} on the internet.")
+
+        await ctx.send(response.content)
 
     @find.command()
     async def movie(self, ctx, *, name):
