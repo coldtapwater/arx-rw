@@ -30,6 +30,7 @@ import cogs.arx_levels
 import cogs.arx_ai
 import cogs.arx_actions
 import cogs.arx_find
+import cogs.arx_heck
 
 import utils.db_funcs as db_funcs
 from dotenv import load_dotenv
@@ -149,6 +150,7 @@ async def on_ready():
     await bot.add_cog(cogs.arx_ai.ArxAI(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_actions.ArxActions(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_find.Find(bot, EMBED_COLOR))
+    await bot.add_cog(cogs.arx_heck.ArxHeck(bot, EMBED_COLOR))
 
 
 
