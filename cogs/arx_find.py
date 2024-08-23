@@ -20,11 +20,6 @@ groq_api_key = os.getenv("GROQ_API_KEY")
 async def get_groq_response(name):
     client = Groq()
     MODEL = 'llama3-groq-70b-8192-tool-use-preview'
-    PROMPT =f"""
-
-
-
-"""
     messages =[
         {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
 
@@ -39,6 +34,26 @@ async def get_groq_response(name):
     )
     return response.choices[0].message.content
 
+async def get_groq_responses_if_not_found(name):
+    client = Groq()
+    MODEL = 'llama3-groq-70b-8192-tool-use-preview'
+    messages = [
+        {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
+
+            find: (name: {name}) => string
+                returns a brief summary of the item the user is trying to find: {name}
+                pick the top 3 results from your search, and then return a brief summary of the top 3 results
+        """},
+        {"role": "user", "content": name}
+    ]
+
+    response = client.chat.completions.create(
+        messages=messages,
+        model=MODEL
+    )
+
+    return response.choices[0].message.content
+
 class Find(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
@@ -50,8 +65,6 @@ class Find(commands.Cog):
     async def find(self, ctx, *, name):
         """Find something on the internet."""
         # tool set up for groq ai
-
-        
         await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
 
 
@@ -74,7 +87,7 @@ class Find(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found. Trying to find something for you.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
 
     @find.command()
     async def anime(self, ctx, *, name):
@@ -95,7 +108,7 @@ class Find(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
     @find.command()
     async def manga(self, ctx, *, name):
         """Find a manga on the internet."""
@@ -115,7 +128,7 @@ class Find(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
 
     @find.command()
     async def book(self, ctx, *, name):
@@ -139,7 +152,7 @@ class Find(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
 
                 
     @find.command()
