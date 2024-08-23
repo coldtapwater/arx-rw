@@ -73,7 +73,8 @@ class Find(commands.Cog):
                         await ctx.send(embed=embed)
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found. Trying to find something for you.")
-                        asycnio.sleep(5)
+                        asyncio.sleep(2)
+                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
 
     @find.command()
     async def anime(self, ctx, *, name):
@@ -93,6 +94,8 @@ class Find(commands.Cog):
                         await ctx.send(embed=embed)
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
+                        asyncio.sleep(2)
+                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
     @find.command()
     async def manga(self, ctx, *, name):
         """Find a manga on the internet."""
@@ -111,6 +114,8 @@ class Find(commands.Cog):
                         await ctx.send(embed=embed)
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
+                        asyncio.sleep(2)
+                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
 
     @find.command()
     async def book(self, ctx, *, name):
@@ -133,6 +138,8 @@ class Find(commands.Cog):
                         await ctx.send(embed=embed)
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
+                        asyncio.sleep(2)
+                        await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
 
                 
     @find.command()
