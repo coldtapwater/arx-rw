@@ -27,10 +27,12 @@ class MemeCog(commands.Cog):
     
     @commands.hybrid_group()
     async def meme(self, ctx):
+        """Get a meme from a subreddit"""
         await ctx.send(f"{my_emojis.ERROR} Invalid subcommand passed. Use `/meme help` to see the available subcommands.")
 
     @meme.command()
     async def help(self, ctx):
+        """Get this help message"""
         embed = discord.Embed(title=f"{my_emojis.PREFIX} Meme Subcommands", color=discord.Color.from_str(self.embed_color))
         embed.add_field(name="`/meme help`", value="Get this help message.", inline=False)
         embed.add_field(name="`/meme dank`", value="Get a meme from the dankmemes subreddit.", inline=False)
@@ -41,6 +43,7 @@ class MemeCog(commands.Cog):
     
     @meme.command()
     async def random(self, ctx):
+        """Get a meme from a random subreddit"""
         meme_data = await self.fetch_meme("random")
         if meme_data:
             embed = discord.Embed(title=f"{my_emojis.PREFIX} Here's a meme for you!", color=discord.Color.from_str(self.embed_color))
@@ -52,6 +55,7 @@ class MemeCog(commands.Cog):
 
     @meme.command()
     async def funny(self, ctx):
+        """Get a meme from the r/funny subreddit"""
         meme_data = await self.fetch_meme("funny")
         if meme_data:
             embed = discord.Embed(title=f"{my_emojis.PREFIX} Here's a meme for you!", color=discord.Color.from_str(self.embed_color))
@@ -63,6 +67,7 @@ class MemeCog(commands.Cog):
 
     @meme.command()
     async def holup(self, ctx):
+        """Get a meme from the r/HolUp subreddit"""
         meme_data = await self.fetch_meme("holup")
         if meme_data:
             embed = discord.Embed(title=f"{my_emojis.PREFIX} Here's a meme for you!", color=discord.Color.from_str(self.embed_color))
@@ -74,6 +79,7 @@ class MemeCog(commands.Cog):
 
     @meme.command()
     async def dank(self, ctx):
+        """Get a meme from the r/dankmemes subreddit"""
         meme_data = await self.fetch_meme("dankmemes")
         if meme_data:
             embed = discord.Embed(title=f"{my_emojis.PREFIX} Here's a meme for you!", color=discord.Color.from_str(self.embed_color))

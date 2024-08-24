@@ -75,6 +75,7 @@ You have access to chat history, input message. keep your message short.
 
     @commands.hybrid_command()
     async def summarize(self, ctx, messages: int=20):
+        """Summarize the recent conversation in the Discord channel to capture the main topics, opinions, and actions discussed."""
         SUMMARY_PROMPT = '''Prompt:
 
 Objective: Summarize the recent conversation in the Discord channel to capture the main topics, opinions, and actions discussed.

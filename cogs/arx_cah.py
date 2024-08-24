@@ -241,7 +241,7 @@ class CardsAgainstHumanity(commands.Cog):
 
         if len(game['submitted']) == len(game['players']) - 1:
             await self.end_round(ctx)
-
+    
     async def end_round(self, ctx):
         game = self.games[ctx.channel.id]
         responses = list(game['responses'].values())

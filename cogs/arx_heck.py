@@ -13,6 +13,7 @@ class ArxHeck(commands.Cog):
 
     @commands.hybrid_command(aliases=["hack"])
     async def heck(self, ctx, target: discord.Member):
+        """Hacks someone (this is a prank)"""
         await ctx.send(f"Hacking {target.mention}...")
 
         last_dms=["omg i just texted my crush ‘goodnight mom’ 😳", "bro i called my teacher ‘dad’ in class today 😭", "why did i dream about marrying my toaster tho? 😂", "i can’t believe i asked if chicken wings come from pigs 🤦‍♂️", "dude i tried to unlock my house door with my car key fob…", "i just realized i wore my shirt backwards all day 🥲", "why did i think narwhals weren’t real until now?", "i just asked my boss for a ‘bathroom break’ in an email 🤦‍♀️", "i accidentally sent a heart emoji to my dentist… help 😅", "i legit forgot how to spell ‘because’ today… twice", "bro i was today years old when i learned how to boil an egg 😭", "i just walked into a door because i thought it was automatic...", "i replied ‘love you too’ to my pizza delivery guy 💀", "how did i manage to drop my phone in the toilet again?", "dude i just texted the wrong person and now they think i’m in love with pineapples 🍍"]
