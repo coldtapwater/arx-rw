@@ -5,8 +5,9 @@ from discord.ext import commands
 from discord.ui import View, Button
 
 class HelpMenu(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot, embed_color):
         self.bot = bot
+        self.embed_color = embed_color
 
     @commands.hybrid_command()
     async def help(self, ctx):
@@ -18,7 +19,7 @@ class HelpMenu(commands.Cog):
         commands_per_page = 5
         start = (page - 1) * commands_per_page
         end = start + commands_per_page
-        embed = discord.Embed(title="Arx Bot Help", description="Use the buttons to navigate.", color=discord.Color.blue())
+        embed = discord.Embed(title="Arx Bot Help", description="Use the buttons to navigate.", color=discord.Color.from_str(self.embed_color))
 
         for i, (command_name, command) in enumerate(list(self.bot.commands)[start:end], start=1):
             embed.add_field(name=f"{i}. {command_name}", value=command.help or "No description", inline=False)

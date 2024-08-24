@@ -31,6 +31,7 @@ import cogs.arx_ai
 import cogs.arx_actions
 import cogs.arx_find
 import cogs.arx_heck
+import cogs.arx_help
 
 import utils.db_funcs as db_funcs
 from dotenv import load_dotenv
