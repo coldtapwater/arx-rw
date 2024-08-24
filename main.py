@@ -243,6 +243,7 @@ async def createaccount(ctx):
 
 @bot.hybrid_command(aliases=['bal'])
 async def balance(ctx, member: discord.Member = None):
+    """Shows your balance"""
     if member is None:
         member = ctx.author
     user_id = str(member.id)
@@ -298,6 +299,7 @@ async def balance(ctx, member: discord.Member = None):
 #STRATEGICALLY CHOOSE ALIASES FOR HYBRID COMMANDS; MAKE SURE THEY DO NOT OVERLAP WITH OTHER HYBRID COMMANDS
 @bot.hybrid_command()
 async def deposit(ctx, amount: str):
+    """Deposits money into your account"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -321,6 +323,7 @@ async def deposit(ctx, amount: str):
 
 @bot.hybrid_command()
 async def withdraw(ctx, amount: int):
+    """Withdraws money from your account"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -341,6 +344,7 @@ async def withdraw(ctx, amount: int):
 @bot.hybrid_command()
 @commands.cooldown(1, 60*60*12, commands.BucketType.user)
 async def work(ctx):
+    """Gives you money for working"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -367,6 +371,7 @@ async def work(ctx):
 
 @bot.hybrid_command()
 async def shop(ctx):
+    """View the shop"""
     conn = sqlite3.connect('bot.db')
     c = conn.cursor()
     c.execute('SELECT * FROM shop')
@@ -382,6 +387,7 @@ async def shop(ctx):
 @bot.hybrid_command()
 @commands.cooldown(1, 60*60*12, commands.BucketType.user)
 async def rob(ctx, member: discord.Member):
+    """Rob another user"""
     user_id = ctx.author.id
     target_id = member.id
     if ctx.author == member:
@@ -423,6 +429,7 @@ async def rob(ctx, member: discord.Member):
 @bot.hybrid_command()
 @commands.cooldown(1, 60*60*12, commands.BucketType.user)
 async def crime(ctx):
+    """Commit a crime"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -449,6 +456,7 @@ async def crime(ctx):
 
 @bot.hybrid_command(aliases=['lb'])
 async def leaderboard(ctx):
+    """View the leaderboard"""
     conn = sqlite3.connect('bot.db')
     c = conn.cursor()
     c.execute('SELECT id, wallet, bank FROM users')
@@ -503,6 +511,7 @@ async def leaderboard(ctx):
 @commands.cooldown(1, 60*60*24, commands.BucketType.user)
 @bot.hybrid_command()
 async def daily(ctx):
+    """Claim your daily reward"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -519,6 +528,7 @@ async def daily(ctx):
 @commands.cooldown(1, 60*60*24*7, commands.BucketType.user)
 @bot.hybrid_command()
 async def weekly(ctx):
+    """Claim your weekly reward"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -535,6 +545,7 @@ async def weekly(ctx):
 @commands.cooldown(1, 60*60*24*30, commands.BucketType.user)
 @bot.hybrid_command()
 async def monthly(ctx):
+    """Claim your monthly reward"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -550,6 +561,7 @@ async def monthly(ctx):
 
 @bot.hybrid_command()
 async def slots(ctx, amount: int):
+    """Play slots and win big!"""
     emojis = "🍎🍊🍐🍋🍉🍇🍓🍒"
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
@@ -596,6 +608,7 @@ async def slots(ctx, amount: int):
 
 @bot.hybrid_command()
 async def convert(ctx, quantity: int):
+    """Convert your gems into buckaroos!"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -613,6 +626,7 @@ async def convert(ctx, quantity: int):
 
 @bot.hybrid_command()
 async def buy(ctx, *, item_name: str, quantity: int = 1):
+    """Buy an item from the shop"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -651,6 +665,7 @@ async def buy(ctx, *, item_name: str, quantity: int = 1):
 
 @bot.hybrid_command()
 async def send(ctx, member: discord.Member, amount: int):
+    """Sends money to another user"""
     user_id = ctx.author.id
     member_id = member.id
     user_data = await db_funcs.get_user_data(user_id)
@@ -678,6 +693,7 @@ async def send(ctx, member: discord.Member, amount: int):
 
 @bot.hybrid_command(aliases=["bt", "transfer"])
 async def banktransfer(ctx, member: discord.Member, amount: int):
+    """Transfers money from one user to another"""
     user_id = ctx.author.id
     member_id = member.id
     user_data = await db_funcs.get_user_data(user_id)
@@ -707,6 +723,7 @@ async def banktransfer(ctx, member: discord.Member, amount: int):
 @bot.hybrid_command()
 @commands.cooldown(1, 15, commands.BucketType.user)
 async def beg(ctx):
+    """Begs for money"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -727,6 +744,7 @@ async def beg(ctx):
 
 @bot.hybrid_command(aliases=["inv", "invent"])
 async def inventory(ctx, member: discord.Member = None):
+    """Shows your inventory"""
     if member is None:
         member = ctx.author
     user_id = str(member.id)
@@ -781,6 +799,7 @@ async def inventory(ctx, member: discord.Member = None):
 
 @bot.hybrid_command()
 async def give(ctx, member: discord.Member, item: str):
+    """Gives an item to another user"""
     user_id = ctx.author.id
     member_id = member.id
     item = item.title()
@@ -805,6 +824,7 @@ async def give(ctx, member: discord.Member, item: str):
 @bot.hybrid_command()
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def dig(ctx):
+    """Dig for coins"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     chance = random.randint(1, 100)
@@ -845,6 +865,7 @@ async def dig(ctx):
 
 @bot.hybrid_command()
 async def hunt(ctx):
+    """Hunt for animals"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -880,6 +901,7 @@ async def hunt(ctx):
 
 @bot.hybrid_command()
 async def wack(ctx, target: discord.Member=None):
+    """Wack someone!"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -942,6 +964,7 @@ async def userole(ctx, color: str, *, role_name: str):
 
 @bot.hybrid_command()
 async def mine(ctx):
+    """Mine for some time!"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     inventory = await db_funcs.get_inventory(user_id)
@@ -978,6 +1001,7 @@ topics = ["The History of the Rubber Chicken", "Why Do We Call It a \"Cat Nap\"?
 
 @bot.hybrid_command()
 async def research(ctx):
+    """Research something!"""
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
     if user_data is None:
@@ -1011,6 +1035,7 @@ async def research(ctx):
 
 @bot.hybrid_command()
 async def deathmatch(ctx, target: discord.Member, wager: int):
+    """Play a deathmatch!"""
     user_id = ctx.author.id
     target_id = target.id
     
@@ -1078,6 +1103,7 @@ async def deathmatch(ctx, target: discord.Member, wager: int):
     
 @bot.hybrid_command()
 async def grab(ctx):
+    """Grab an emoji from another message!"""
     if not ctx.message.reference:
         await ctx.send(f"{my_emojis.ERROR} reply to a message with an emoji for me so i can grabs it.")
         return
@@ -1232,6 +1258,7 @@ class BlackjackView(discord.ui.View):
 
 @bot.hybrid_command()
 async def blackjack(ctx, bet: int):
+    """Play a blackjack game!"""
     user_id = str(ctx.author.id)
     user_wallet, user_bank, user_gems = await db_funcs.get_user_data(user_id)
     if user_wallet == 0:
@@ -1301,6 +1328,7 @@ class UpgradeButton(ui.Button):
 
 @bot.hybrid_command()
 async def upgrades(ctx):
+    """View the upgrades"""
     conn = sqlite3.connect('bot.db')
     c = conn.cursor()
     c.execute('SELECT * FROM upgrades')
@@ -1390,6 +1418,7 @@ async def handle_roulette_bet(interaction: discord.Interaction, user_id, bet, ch
 
 @bot.hybrid_command()
 async def roulette(ctx, bet: int):
+    """Play Roulette with the bot!"""
     user_id = str(ctx.author.id)
     user_data = await db_funcs.get_user_data(user_id)
     wallet, bank, gems = map(int, user_data)
@@ -1412,10 +1441,12 @@ async def roulette(ctx, bet: int):
 # UTILITIES
 @bot.hybrid_command()
 async def ping(ctx):
+    """Pong!"""
     await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
 
 @bot.hybrid_command()
 async def info(ctx):
+    """Shows info about the bot"""
     embed = discord.Embed(title="Bot Info", description="Some info about this bot", color=discord.Color.from_str(EMBED_COLOR))
     embed.add_field(name="Creator: ", value="j_coldtapwater")
     embed.add_field(name="Version: ", value="1.3.3")
@@ -1429,6 +1460,7 @@ async def info(ctx):
 
 @bot.hybrid_command()
 async def avatar(ctx, member: discord.Member = None):
+    """Shows the avatar of a user"""
     if member is None:
         member = ctx.author
     embed = discord.Embed(title=f"{member}'s Avatar", color=discord.Color.from_str(EMBED_COLOR))
@@ -1438,6 +1470,7 @@ async def avatar(ctx, member: discord.Member = None):
 
 @bot.hybrid_command()
 async def contact(ctx, message: str):
+    """Send a message to the developer"""
     if message:
         embed = discord.Embed(title="Issue Submitted", description=f"{ctx.author.mention}", color=discord.Color.from_str(EMBED_COLOR))
         embed.set_thumbnail(url=ctx.author.display_avatar.url)
@@ -1447,105 +1480,10 @@ async def contact(ctx, message: str):
     else:
         await ctx.send("Please provide an issue message.")
 
-class HelpView(View):
-    def __init__(self, embeds):
-        super().__init__(timeout=180)
-        self.embeds = embeds
-        self.current_page = 0
-        self.update_buttons()
-
-    def update_buttons(self):
-        for child in self.children:
-            child.disabled = False
-        if self.current_page == 0:
-            self.previous_button.disabled = True
-        if self.current_page == len(self.embeds) - 1:
-            self.next_button.disabled = True
-
-    @discord.ui.button(label='Previous', style=discord.ButtonStyle.primary, disabled=True)
-    async def previous_button(self, interaction: discord.Interaction, button: Button):
-        self.current_page -= 1
-        self.update_buttons()
-        await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
-
-    @discord.ui.button(label='Next', style=discord.ButtonStyle.primary)
-    async def next_button(self, interaction: discord.Interaction, button: Button):
-        self.current_page += 1
-        self.update_buttons()
-        await interaction.response.edit_message(embed=self.embeds[self.current_page], view=self)
-
-@bot.hybrid_command()
-async def helpme(ctx):
-    embeds = [
-        discord.Embed(title=f"{my_emojis.PREFIX} Introduction", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="About this bot", value="arx is an economy-based bot, and since it's new, it's a little lacking in features, but never fear! I am always adding new features weekly, sometimes daily! If you have any suggestions, please contact me (the developer) using the `/contact` command.", inline=False)
-        .add_field(name="Some useful information", value="The main currency of the bot are called buckaroos (such a fascinating name lol). However, you'll find that when doing some research or on an ultra rare occasion, you'll get gems (woahhhhhh amazzzzinggggg). These are redemable in the shops.", inline=False)
-        .add_field(name="How do I get started?", value="To get started, you'll need to run any of the commands arx offers. This will create your \"account\" which will carry across any server that arx is in. Cool right?", inline=False)
-        .add_field(name="What should I do if I'm having trouble?", value="If you're having trouble, please contact the developer using the `/contact` command. I'll be happy to help (just know if you are in a server I'm not in, I won't be able to help you directly, so I recommend you join my support server).")
-        .add_field(name="What are Laurels?", value="Laurels are like achievements! You earn them my getting a very high amount of buckaroos. You can buy laurels in the shop. These will then be displayed for everyone to see on the leaderboard on profile! Lucky you!", inline=False),
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Economy Commands - Page 1", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="</balance:1253869725226762328>", value="Displays the balance of the specified member or the command user if no member is mentioned. The balance includes wallet and bank amounts.", inline=False)
-        .add_field(name="</leaderboard:1253869725507653667>", value="Displays the top 10 players by net worth (wallet + bank balance).", inline=False)
-        .add_field(name="</deposit:1253869725226762329>", value="Deposits the specified amount (or all) from the user's wallet into their bank.", inline=False)
-        .add_field(name="</withdraw:1253869725507653662>", value="Withdraws the specified amount from the user's bank into their wallet.", inline=False)
-        .add_field(name="</work:1253869725507653663>", value="Perform a work task to earn a random amount of currency. Can be used once every 4 hours.", inline=False),
-        
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Economy Commands - Page 2", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="</shop:1253869725507653664>", value="Displays the items available in the shop, including their price, description, and emoji.", inline=False)
-        .add_field(name="</buy:1253869725792997416>", value="Purchases the specified item from the shop. Optional quantity can be provided; defaults to 1.", inline=False)
-        .add_field(name="</inventory:1253869725792997418>", value="Displays the inventory of the specified member or the command user if no member is mentioned.", inline=False)
-        .add_field(name="</blacksmith:1255076232639283266>", value="Buy weapons from the blacksmith using gems", inline=False),
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Economy Commands - Page 3", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="</daily:1253869725507653668>", value="Claim a daily reward of random currency. Can be used once every 24 hours.", inline=False)
-        .add_field(name="</weekly:1253869725507653669>", value="Claim a weekly reward of random currency. Can be used once every 7 days.", inline=False)
-        .add_field(name="</monthly:1253869725507653670>", value="Claim a monthly reward of random currency. Can be used once every 30 days.", inline=False)
-        .add_field(name="</beg:1254128279720296562>", value="Beg for money. There's a chance you might receive some currency. Can be used once every 30 seconds.", inline=False)
-        .add_field(name="</rob:1253869725507653665>", value="Attempt to rob the specified member. Success and failure rates apply. Can be used once every 12 hours.", inline=False)
-        .add_field(name="</crime:1253869725507653666>", value="Attempt to commit a crime for a reward. Success and failure rates apply. Can be used once every 24 hours.", inline=False),
-        
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Economy Commands - Page 4", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="</send:1254128279720296561>", value="Send the specified amount of currency from your wallet to the mentioned member's wallet.", inline=False)
-        .add_field(name="</banktransfer:1254352241494855770>", value="Transfer the specified amount of currency from your bank to the mentioned member's bank. A fee applies for large transfers.", inline=False)
-        .add_field(name="</slots:1253869725507653671>", value="Play a slot machine game with the specified bet amount. Potential winnings depend on the outcome.", inline=False)
-        .add_field(name="</dig:1254128279720296563>", value="Use a shovel from your inventory to dig for treasure. Requires a shovel in inventory. Can be used once every minute.", inline=False)
-        .add_field(name="</hunt:1254128279720296564>", value="Use a pistol from your inventory to hunt animals for currency. Requires a pistol in inventory.", inline=False)
-        .add_field(name="</mine:1255076232639283268>", value="Use a pickaxe from your inventory to mine for treasure. Requires a pickaxe in inventory.", inline=False)
-        .add_field(name="</uwu:1258210313086439464>", value="UwU's the specified member for 2 minutes. Requires 3000 buckaroos in your wallet.", inline=False)
-        .add_field(name="</taxes:1260737782498983966>", value="View your net worth and tax rate. You can file your taxes and put your money into a vault.", inline=False)
-        .add_field(name="</vault:1261505686232236043>", value="View the vault with all the money people have put in it. There is a 1% chance you might get it", inline=False)
-        .add_field(name="</heist:1261521486187860121>", value="Start a heist against the vault. Requires 100M buckaroos in your wallet. (COMING SOON)", inline=False),
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Fun Commands - Page 1", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="/wack <member: @mention>", value="Attempt to wack the specified member. Requires a Big Wacker in inventory.", inline=False)
-        .add_field(name="/flip", value="Flips a coin and returns heads or tails.", inline=False)
-        .add_field(name="/avatar [member: @mention]", value="Displays the avatar of the specified member or the command user if no member is mentioned.", inline=False)
-        .add_field(name="/tictactoe <member: @mention> ", value="Starts a game of tic-tac-toe with the specified member.", inline=False)
-        .add_field(name="/wouldyourather", value="Starts a Would You Rather prompt in the channel the command is run in.", inline=False)
-        .add_field(name="/start_cah", value="Starts a game of Cards Against Humanity in the channel the command is run in.", inline=False)
-        .add_field(name="/join_cah", value="Joins a game of Cards Against Humanity.", inline=False)
-        .add_field(name="/deal_cah", value="Deals cards to all players in a game of Cards Against Humanity.", inline=False)
-        .add_field(name="/end_cah", value="Ends the game of Cards Against Humanity. **NOTE**: THIS IS NOT THE WAY TO GET RESPONSES. RESULTS ARE DISPLAYED IN THE CHANNEL ONCE ALL PLAYERS HAVE SUBMITTED A CARD.", inline=False)
-        .add_field(name="/connect4 <member: @mention>", value="Starts a game of connect4 with the specified member.", inline=False),
-
-
-        discord.Embed(title=f"{my_emojis.PREFIX} Fun Commands - Page 2", color=discord.Color.from_str(EMBED_COLOR))
-        .add_field(name="/sweeper", value="Starts a game of Minesweeper in the channel the command is run in.", inline=False)
-        .add_field(name="/blackjack <bet: int>", value="Starts a game of Blackjack with the specified bet.", inline=False)
-        .add_field(name="/hangman", value="Starts a game of Hangman in the channel the command is run in.", inline=False)
-        .add_field(name="/roulette <bet: int>", value="Starts a game of Roulette with the specified bet. The higher the bet, the higher the payout.", inline=False)
-        .add_field(name="/adventure", value="Starts a game of adventure in the channel the command is run in.", inline=False),
-    ]
-
-    view = HelpView(embeds)
-    await ctx.send(embed=embeds[0], view=view, ephemeral=True)
-
 
 @bot.hybrid_command()
 async def addbot(ctx):
+    """Add the bot to your server"""
     embed = discord.Embed(title=f"{my_emojis.PREFIX} Add Bot", description="Add the bot to your server", color=discord.Color.from_str(EMBED_COLOR))
     embed.add_field(name="Invite Link", value="https://discord.com/oauth2/authorize?client_id=1226933981786804314", inline=False)
     embed.add_field(name="Support Server", value="https://discord.gg/vypVzwNn8F", inline=False)
