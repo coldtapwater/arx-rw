@@ -68,10 +68,6 @@ class ArxUpdate(commands.Cog):
         if user_id in self.alert_tasks:
             del self.alert_tasks[user_id]
 
-class onServerJoin(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
         """Sends a message to newly joined guilds asking users to run the /help command."""

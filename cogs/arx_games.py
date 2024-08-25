@@ -368,7 +368,7 @@ class ArxGames(commands.Cog):
             await message.edit(embed=embed)
 
 
-class WordScramble(commands.Cog):
+class ArxScramble(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color
@@ -431,7 +431,7 @@ class WordScramble(commands.Cog):
         return 'No definition found.'
         
 
-class FastClickGame(commands.Cog):
+class ArxFastClick(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
