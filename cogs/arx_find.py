@@ -68,7 +68,14 @@ class ArxFind(commands.Cog):
     @commands.group()
     async def find(self, ctx, *, name):
         """Find something on the internet."""
-        # tool set up for groq ai
+        if ctx.invoked_subcommand is None:
+            await ctx.send("Invalid subcommand. Use `r find help` for help.")
+    
+
+    @find.command()
+    async def gen(self, ctx, *, name):
+        """Find something on the internet."""
+
         await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
 
 
