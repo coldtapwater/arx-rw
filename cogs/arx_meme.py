@@ -28,18 +28,7 @@ class MemeCog(commands.Cog):
     @commands.group()
     async def meme(self, ctx):
         """Get a meme from a subreddit"""
-        await ctx.send(f"{my_emojis.ERROR} Invalid subcommand passed. Use `/meme help` to see the available subcommands.")
-
-    @meme.command()
-    async def help(self, ctx):
-        """Get this help message"""
-        embed = discord.Embed(title=f"{my_emojis.PREFIX} Meme Subcommands", color=discord.Color.from_str(self.embed_color))
-        embed.add_field(name="`/meme help`", value="Get this help message.", inline=False)
-        embed.add_field(name="`/meme dank`", value="Get a meme from the dankmemes subreddit.", inline=False)
-        embed.add_field(name="`/meme funny`", value="Get a meme from the funny subreddit.", inline=False)
-        embed.add_field(name="`/meme holup`", value="Get a meme from the HolUp subreddit. (may contain nsfw memes)", inline=False)
-        embed.add_field(name="`/meme random`", value="Get a meme from a random sfw subreddit.", inline=False)
-        await ctx.send(embed=embed)
+        await ctx.send(f"{my_emojis.ERROR} Invalid subcommand passed. Use `r help meme` to see the available subcommands.")
     
     @meme.command()
     async def random(self, ctx):

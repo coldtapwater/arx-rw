@@ -60,7 +60,7 @@ class updateUtils(commands.Cog):
                 self.alert_tasks[ctx.author.id] = self.bot.loop.create_task(self.send_alert(ctx))
 
     async def send_alert(self, ctx):
-        await ctx.send("Hey, there's a new update! Run `/alert` to see the latest update.")
+        await ctx.send("Hey, there's a new update! Run `r alert` to see the latest update.")
         await self.clear_alert_task(ctx.author.id)
 
     async def clear_alert_task(self, user_id):
@@ -74,8 +74,8 @@ class onServerJoin(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
-        """Sends a message to newly joined guilds asking users to run the /helpme command."""
-        embed = discord.Embed(title="Hello!", description="Thanks for inviting me to your server! To get started, please run the </helpme:1255312627366629438> command to learn more about my features and how to use me. If you have any questions or need any help, feel free to contact me using `/contact`. Have fun!", color=discord.Color.blue())
+        """Sends a message to newly joined guilds asking users to run the /help command."""
+        embed = discord.Embed(title="Hello!", description="Thanks for inviting me to your server! To get started, please run the `r help` command to learn more about my features and how to use me. If you have any questions or need any help, feel free to contact me using `/contact`. Have fun!", color=discord.Color.blue())
         await guild.system_channel.send(embed=embed)
         logging.info(f"New guild joined: {guild.name} ({guild.id})")
         await self.bot.change_presence(activity=discord.Game(name=f"with your mom in {len(self.bot.guilds)} servers"))

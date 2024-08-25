@@ -6,7 +6,7 @@ class Quotes(commands.Cog):
         self.bot = bot
         self.quote_channels = {}  # Dictionary to store quote channels for each guild
 
-    @commands.hybrid_command()
+    @commands.command()
     async def quote(self, ctx):
         """Quote a message."""
         if not ctx.message.reference or not ctx.message.reference.message_id:
@@ -20,7 +20,7 @@ class Quotes(commands.Cog):
 
         guild_id = ctx.guild.id
         if guild_id not in self.quote_channels:
-            await ctx.send("No quote channel configured. Please ask an admin to set one using `/quote config <channel_id>`.")
+            await ctx.send("No quote channel configured. Please ask an admin to set one using `r quote config <channel_id>`.")
             return
 
         quote_channel_id = self.quote_channels[guild_id]
@@ -39,7 +39,7 @@ class Quotes(commands.Cog):
         await quote_channel.send(embed=embed)
         await ctx.send(f"Quote posted in {quote_channel.mention}")
 
-    @commands.hybrid_command()
+    @commands.command()
     @commands.has_permissions(administrator=True)
     async def quote_config(self, ctx, channel: discord.TextChannel):
         """Configure the channel for quotes (Admin only)."""
