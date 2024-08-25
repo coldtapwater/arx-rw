@@ -153,7 +153,6 @@ async def on_ready():
     await bot.add_cog(cogs.arx_find.Find(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_heck.ArxHeck(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_help.HelpMenu(bot, EMBED_COLOR))
-    await bot.remove_command("help")
 
 
 # ERROR HANDLING
