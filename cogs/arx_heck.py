@@ -11,7 +11,7 @@ class ArxHeck(commands.Cog):
         self.bot = bot
         self.embed_color = embed_color
 
-    @commands.hybrid_command(aliases=["hack"])
+    @commands.command(aliases=["hack"])
     async def heck(self, ctx, target: discord.Member):
         """Hacks someone (this is a prank)"""
         await ctx.send(f"Hacking {target.mention}...")

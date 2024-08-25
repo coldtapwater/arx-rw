@@ -50,7 +50,7 @@ class Games(commands.Cog):
         self.bot = bot
         self.embed_color = embed_color
 
-    @commands.hybrid_command()
+    @commands.command()
     async def flip(self, ctx):
         """Flips a coin."""
         coin = random.randint(0, 1)
@@ -63,7 +63,7 @@ class Games(commands.Cog):
             embed.add_field(name="Tails", value="\u200b")
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def wouldyourather(self, ctx):
         """Would you rather?
 
@@ -157,7 +157,7 @@ class Games(commands.Cog):
         await message.edit(embed=embed, view=None)
 
 
-    @commands.hybrid_command()
+    @commands.command()
     async def connect4(self, ctx, opponent: discord.Member):
         """Start a Connect 4 game with another member."""
         if opponent == ctx.author:
@@ -242,7 +242,7 @@ class Games(commands.Cog):
 
         await message.edit(view=view)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def tictactoe(self, ctx, opponent: discord.Member):
         """Start a TicTacToe game with another member."""
         if opponent == ctx.author:
@@ -325,7 +325,7 @@ class Games(commands.Cog):
 
         await message.edit(view=view)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def hangman(self, ctx):
         """
         Play a game of hangman with the bot.
@@ -375,7 +375,7 @@ class WordScramble(commands.Cog):
         self.current_word = None
         self.hint = None
 
-    @commands.hybrid_command()
+    @commands.command()
     async def start_scramble(self, ctx):
         word, hint = await self.fetch_word_and_hint()
         if word and hint:
@@ -435,7 +435,7 @@ class FastClickGame(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_group()
+    @commands.group()
     async def fastclick(self, ctx):
         if ctx.invoked_subcommand is None:
             await ctx.send("Use `fastclick start` to start the game or `fastclick leaderboard` to view the leaderboard.")

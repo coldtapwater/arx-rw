@@ -73,7 +73,7 @@ You have access to chat history, input message. keep your message short.
                 await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again. or use the `/contact` to bring this to the developer's attention")
                 logging.critical(e)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def summarize(self, ctx, messages: int=20):
         """Summarize the recent conversation in the Discord channel."""
         SUMMARY_PROMPT = '''Prompt:

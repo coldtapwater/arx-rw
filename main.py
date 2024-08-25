@@ -194,7 +194,7 @@ async def on_command_error(ctx, error):
 
 
 # OWNER COMMANDS
-@bot.hybrid_command()
+@bot.command()
 @commands.is_owner()
 async def addmoney(ctx, member: discord.Member, amount: int):
     user_id = member.id
@@ -209,7 +209,7 @@ async def addmoney(ctx, member: discord.Member, amount: int):
     logging.info(f"{member.display_name} has been given {amount} {CURRENCY} by {ctx.author.display_name} in server: {ctx.guild.name}")
 
 
-@bot.hybrid_command()
+@bot.command()
 @commands.is_owner()
 async def removemoney(ctx, member: discord.Member, amount: float):
     user_id = member.id
@@ -227,7 +227,7 @@ async def removemoney(ctx, member: discord.Member, amount: float):
     logging.info(f"{member.display_name} has removed {amount} {CURRENCY} by {ctx.author.display_name} in server: {ctx.guild.name}")
 
 
-@bot.hybrid_command()   
+@bot.command()   
 async def createaccount(ctx):
     user_id = ctx.author.id
     user_data = await db_funcs.get_user_data(user_id)
@@ -242,7 +242,7 @@ async def createaccount(ctx):
     
 
 
-@bot.hybrid_command(aliases=['bal'])
+@bot.command(aliases=['bal'])
 async def balance(ctx, member: discord.Member = None):
     """Shows your balance"""
     if member is None:
@@ -298,7 +298,7 @@ async def balance(ctx, member: discord.Member = None):
 # ECONOMY COMMANDS
 
 #STRATEGICALLY CHOOSE ALIASES FOR HYBRID COMMANDS; MAKE SURE THEY DO NOT OVERLAP WITH OTHER HYBRID COMMANDS
-@bot.hybrid_command()
+@bot.command()
 async def deposit(ctx, amount: str):
     """Deposits money into your account"""
     user_id = ctx.author.id
@@ -322,7 +322,7 @@ async def deposit(ctx, amount: str):
     await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def withdraw(ctx, amount: int):
     """Withdraws money from your account"""
     user_id = ctx.author.id
@@ -342,7 +342,7 @@ async def withdraw(ctx, amount: int):
     await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 @commands.cooldown(1, 60*60*12, commands.BucketType.user)
 async def work(ctx):
     """Gives you money for working"""
@@ -370,7 +370,7 @@ async def work(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def shop(ctx):
     """View the shop"""
     conn = sqlite3.connect('bot.db')
@@ -385,7 +385,7 @@ async def shop(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 @commands.cooldown(1, 60*60*12, commands.BucketType.user)
 async def rob(ctx, member: discord.Member):
     """Rob another user"""
@@ -427,7 +427,7 @@ async def rob(ctx, member: discord.Member):
         await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 @commands.cooldown(1, 60*60*12, commands.BucketType.user)
 async def crime(ctx):
     """Commit a crime"""
@@ -455,7 +455,7 @@ async def crime(ctx):
         await ctx.send(embed=embed)
 
 
-@bot.hybrid_command(aliases=['lb'])
+@bot.command(aliases=['lb'])
 async def leaderboard(ctx):
     """View the leaderboard"""
     conn = sqlite3.connect('bot.db')
@@ -510,7 +510,7 @@ async def leaderboard(ctx):
 
 
 @commands.cooldown(1, 60*60*24, commands.BucketType.user)
-@bot.hybrid_command()
+@bot.command()
 async def daily(ctx):
     """Claim your daily reward"""
     user_id = ctx.author.id
@@ -527,7 +527,7 @@ async def daily(ctx):
 
 
 @commands.cooldown(1, 60*60*24*7, commands.BucketType.user)
-@bot.hybrid_command()
+@bot.command()
 async def weekly(ctx):
     """Claim your weekly reward"""
     user_id = ctx.author.id
@@ -544,7 +544,7 @@ async def weekly(ctx):
 
 
 @commands.cooldown(1, 60*60*24*30, commands.BucketType.user)
-@bot.hybrid_command()
+@bot.command()
 async def monthly(ctx):
     """Claim your monthly reward"""
     user_id = ctx.author.id
@@ -560,7 +560,7 @@ async def monthly(ctx):
     await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def slots(ctx, amount: int):
     """Play slots and win big!"""
     emojis = "🍎🍊🍐🍋🍉🍇🍓🍒"
@@ -607,7 +607,7 @@ async def slots(ctx, amount: int):
         await msg.edit(embed=lose)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def convert(ctx, quantity: int):
     """Convert your gems into buckaroos!"""
     user_id = ctx.author.id
@@ -625,7 +625,7 @@ async def convert(ctx, quantity: int):
         await ctx.send(f"{my_emojis.ERROR} {ctx.author.mention} you don't have enough gems to convert!")
 
 
-@bot.hybrid_command()
+@bot.command()
 async def buy(ctx, *, item_name: str, quantity: int = 1):
     """Buy an item from the shop"""
     user_id = ctx.author.id
@@ -664,7 +664,7 @@ async def buy(ctx, *, item_name: str, quantity: int = 1):
     await ctx.send(f"{my_emojis.PREFIX} You have purchased {quantity} {item_name} for {item_price * quantity} credits. You now have {inventory_dict[item_name]} {item_name} in your inventory.")
 
 
-@bot.hybrid_command()
+@bot.command()
 async def send(ctx, member: discord.Member, amount: int):
     """Sends money to another user"""
     user_id = ctx.author.id
@@ -692,7 +692,7 @@ async def send(ctx, member: discord.Member, amount: int):
     await ctx.send(f"{my_emojis.PREFIX} Sent {amount} {CURRENCY} to {member.mention}.")
 
 
-@bot.hybrid_command(aliases=["bt", "transfer"])
+@bot.command(aliases=["bt", "transfer"])
 async def banktransfer(ctx, member: discord.Member, amount: int):
     """Transfers money from one user to another"""
     user_id = ctx.author.id
@@ -721,7 +721,7 @@ async def banktransfer(ctx, member: discord.Member, amount: int):
     await ctx.send(f"{my_emojis.PREFIX} Sent {amount} {CURRENCY} to {member.mention} for a fee of {amount * FEE} {CURRENCY}.")
 
 
-@bot.hybrid_command()
+@bot.command()
 @commands.cooldown(1, 15, commands.BucketType.user)
 async def beg(ctx):
     """Begs for money"""
@@ -743,7 +743,7 @@ async def beg(ctx):
         await ctx.send(f"{my_emojis.ERROR} You didn't get anything. Try again in 15 seconds.")
 
 
-@bot.hybrid_command(aliases=["inv", "invent"])
+@bot.command(aliases=["inv", "invent"])
 async def inventory(ctx, member: discord.Member = None):
     """Shows your inventory"""
     if member is None:
@@ -798,7 +798,7 @@ async def inventory(ctx, member: discord.Member = None):
         await ctx.send(embed=page)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def give(ctx, member: discord.Member, item: str):
     """Gives an item to another user"""
     user_id = ctx.author.id
@@ -822,7 +822,7 @@ async def give(ctx, member: discord.Member, item: str):
     await ctx.send(f"{my_emojis.PREFIX} Given {item} to {member.mention}.")
 
 
-@bot.hybrid_command()
+@bot.command()
 @commands.cooldown(1, 60, commands.BucketType.user)
 async def dig(ctx):
     """Dig for coins"""
@@ -864,7 +864,7 @@ async def dig(ctx):
     await db_funcs.save_user_data(user_id, wallet, bank, gems)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def hunt(ctx):
     """Hunt for animals"""
     user_id = ctx.author.id
@@ -900,7 +900,7 @@ async def hunt(ctx):
         await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def wack(ctx, target: discord.Member=None):
     """Wack someone!"""
     user_id = ctx.author.id
@@ -936,7 +936,7 @@ async def wack(ctx, target: discord.Member=None):
         await ctx.send(embed=embed)
 
 
-@bot.hybrid_command()
+@bot.command()
 async def userole(ctx, color: str, *, role_name: str):
     """Create a role with the color (#000000 as an example) and name you want!"""
     user_id = ctx.author.id
@@ -963,7 +963,7 @@ async def userole(ctx, color: str, *, role_name: str):
     await ctx.send(f"{my_emojis.PREFIX} da role '{role_name}' with da color '{color}' has been bestowed upon yous!")
 
 
-@bot.hybrid_command()
+@bot.command()
 async def mine(ctx):
     """Mine for some time!"""
     user_id = ctx.author.id
@@ -1000,7 +1000,7 @@ topics = ["The History of the Rubber Chicken", "Why Do We Call It a \"Cat Nap\"?
           "The Truth About Santa’s Reindeer", "Why Do People Talk to Plants?", "The Enigma of the Potato Battery", "The Legend of the Snipe Hunt", "Why Are Flamingos Pink?",
           "The Cultural Impact of the Whoopee Cushion"]
 
-@bot.hybrid_command()
+@bot.command()
 async def research(ctx):
     """Research something!"""
     user_id = ctx.author.id
@@ -1034,7 +1034,7 @@ async def research(ctx):
     await first.edit(embed=embed2)
     
 
-@bot.hybrid_command()
+@bot.command()
 async def deathmatch(ctx, target: discord.Member, wager: int):
     """Play a deathmatch!"""
     user_id = ctx.author.id
@@ -1102,7 +1102,7 @@ async def deathmatch(ctx, target: discord.Member, wager: int):
     await db_funcs.save_user_data(target_id, target_wallet, target_bank, target_gems)
 
     
-@bot.hybrid_command()
+@bot.command()
 async def grab(ctx):
     """Grab an emoji from another message!"""
     if not ctx.message.reference:
@@ -1257,7 +1257,7 @@ class BlackjackView(discord.ui.View):
         await self.message.edit(embed=embed, view=None)
         self.stop()
 
-@bot.hybrid_command()
+@bot.command()
 async def blackjack(ctx, bet: int):
     """Play a blackjack game!"""
     user_id = str(ctx.author.id)
@@ -1327,7 +1327,7 @@ class UpgradeButton(ui.Button):
 
         await interaction.response.send_message(f"{my_emojis.PREFIX} You have successfully purchased {self.item_name}!", ephemeral=True)
 
-@bot.hybrid_command()
+@bot.command()
 async def upgrades(ctx):
     """View the upgrades"""
     conn = sqlite3.connect('bot.db')
@@ -1417,7 +1417,7 @@ async def handle_roulette_bet(interaction: discord.Interaction, user_id, bet, ch
     await db_funcs.save_user_data(user_id, wallet, bank, gems)
     await interaction.response.send_message(result, ephemeral=True)
 
-@bot.hybrid_command()
+@bot.command()
 async def roulette(ctx, bet: int):
     """Play Roulette with the bot!"""
     user_id = str(ctx.author.id)
@@ -1440,12 +1440,12 @@ async def roulette(ctx, bet: int):
 
 
 # UTILITIES
-@bot.hybrid_command()
+@bot.command()
 async def ping(ctx):
     """Pong!"""
     await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
 
-@bot.hybrid_command()
+@bot.command()
 async def info(ctx):
     """Shows info about the bot"""
     embed = discord.Embed(title="Bot Info", description="Some info about this bot", color=discord.Color.from_str(EMBED_COLOR))
@@ -1459,7 +1459,7 @@ async def info(ctx):
 
     await ctx.send(embed=embed)
 
-@bot.hybrid_command()
+@bot.command()
 async def avatar(ctx, member: discord.Member = None):
     """Shows the avatar of a user"""
     if member is None:
@@ -1469,7 +1469,7 @@ async def avatar(ctx, member: discord.Member = None):
 
     await ctx.send(embed=embed)
 
-@bot.hybrid_command()
+@bot.command()
 async def contact(ctx, message: str):
     """Send a message to the developer"""
     if message:
@@ -1482,7 +1482,7 @@ async def contact(ctx, message: str):
         await ctx.send("Please provide an issue message.")
 
 
-@bot.hybrid_command()
+@bot.command()
 async def addbot(ctx):
     """Add the bot to your server"""
     embed = discord.Embed(title=f"{my_emojis.PREFIX} Add Bot", description="Add the bot to your server", color=discord.Color.from_str(EMBED_COLOR))
@@ -1504,7 +1504,7 @@ async def addbot(ctx):
 
 
 # SOME MORE OWNER COMMANDS
-@bot.hybrid_command()
+@bot.command()
 @commands.is_owner()
 async def sync(ctx):
     try:

@@ -61,7 +61,7 @@ class UwU(commands.Cog):
         self.bot = bot
         self.bot.webhooks = {}  # Initialize the webhooks dictionary
 
-    @commands.hybrid_command()
+    @commands.command()
     async def uwu(self, ctx, target: discord.Member):
         """Uwu-ify a target member for 2 minutes for 3000 buckaroos."""
         user_id = ctx.author.id
@@ -129,7 +129,7 @@ class UwU(commands.Cog):
 
         await ctx.send(embed=embed, view=confirm_view, ephemeral=True)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def loud(self, ctx, target: discord.Member):
         """Make a target member YELL for 2 minutes for 3000 buckaroos."""
         user_id = ctx.author.id

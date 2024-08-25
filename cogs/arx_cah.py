@@ -8,7 +8,7 @@ class CardsAgainstHumanity(commands.Cog):
         self.embed_color = embed_color
         self.games = {}
 
-    @commands.hybrid_group()
+    @commands.group()
     async def cah_nsfw(self, ctx):
         """Cards Against Humanity commands."""
         if ctx.invoked_subcommand is None:
@@ -276,7 +276,7 @@ class CardsAgainstHumanity(commands.Cog):
         del self.games[ctx.channel.id]
         await ctx.send("The game has been ended.")
 
-    @commands.hybrid_group()
+    @commands.group()
     async def cah_sfw(self, ctx):
         """Cards Against Humanity commands."""
         if ctx.invoked_subcommand is None:

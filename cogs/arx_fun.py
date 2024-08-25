@@ -14,7 +14,7 @@ class ArxFun(commands.Cog):
             return  # Ignore bot messages
         self.sniped_messages[message.channel.id] = (message.content, message.author, message.created_at)
 
-    @commands.hybrid_command(name="snipe")
+    @commands.command(name="snipe")
     async def snipe(self, ctx):
         """Snipes the last deleted message in the channel."""
         channel = ctx.channel

@@ -110,7 +110,7 @@ class Levels(commands.Cog):
                 if role:
                     await member.add_roles(role)
     
-    @commands.hybrid_command()
+    @commands.command()
     async def pf(self, ctx, member: discord.Member = None):
         """Displays the user's profile with leveling progress."""
         if member is None:
@@ -137,7 +137,7 @@ class Levels(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def top(self, ctx):
         """Shows the leaderboard for the most active users."""
         guild_id = str(ctx.guild.id)
@@ -157,7 +157,7 @@ class Levels(commands.Cog):
                         embed.add_field(name=f"{i}. {user}", value=f"Level: {level} | XP: {xp}", inline=False)
             await ctx.send(embed=embed)
 
-    @commands.hybrid_group()
+    @commands.group()
     async def levels(self, ctx):
         """Group command for leveling settings."""
         if ctx.invoked_subcommand is None:
@@ -246,7 +246,7 @@ class Levels(commands.Cog):
             await db.commit()
         await ctx.send(f"{my_emojis.PREFIX} All users' XP has been reset.")
 
-    @commands.hybrid_command()
+    @commands.command()
     async def rewards(self, ctx):
         """Displays the available roles and their required levels."""
         guild_id = str(ctx.guild.id)

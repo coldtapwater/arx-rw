@@ -25,7 +25,7 @@ class MemeCog(commands.Cog):
                     return await response.json()
                 return None
     
-    @commands.hybrid_group()
+    @commands.group()
     async def meme(self, ctx):
         """Get a meme from a subreddit"""
         await ctx.send(f"{my_emojis.ERROR} Invalid subcommand passed. Use `/meme help` to see the available subcommands.")

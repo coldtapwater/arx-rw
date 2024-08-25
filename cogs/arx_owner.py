@@ -35,14 +35,14 @@ class updateUtils(commands.Cog):
         with open(self.update_file, 'w') as f:
             json.dump({"update_text": self.current_update, "seen_users": list(self.seen_users)}, f, indent=4)
 
-    @commands.hybrid_command()
+    @commands.command()
     @commands.is_owner()
     async def setupdate(self, ctx, *, update_text: str):
         """Set the update text."""
         self.save_update(update_text)
         await ctx.send("Update text has been set successfully.")
 
-    @commands.hybrid_command()
+    @commands.command()
     async def alert(self, ctx):
         """Show the latest update."""
         if self.current_update:

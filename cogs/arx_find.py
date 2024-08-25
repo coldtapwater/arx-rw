@@ -61,7 +61,7 @@ class Find(commands.Cog):
         
 
 
-    @commands.hybrid_group()
+    @commands.group()
     async def find(self, ctx, *, name):
         """Find something on the internet."""
         # tool set up for groq ai
