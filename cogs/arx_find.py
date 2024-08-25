@@ -17,14 +17,29 @@ dotenv.load_dotenv()
 omdb_api_key = os.getenv("OMDB_API_KEY")
 groq_api_key = os.getenv("GROQ_API_KEY")
 
-async def get_groq_response(name):
+async def get_groq_response(name, results=1):
     client = Groq()
     MODEL = 'llama3-groq-70b-8192-tool-use-preview'
     messages =[
         {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
 
-            find: (name: {name}) => string
-                returns a brief summary of the of the item: {name}"""},
+            find: (trying to find: {name}) => string 
+                returns a brief summary of the of the item the user is trying to find: {name}
+                if there is ambiguity or multiple results, return the top result and preface that the user can ask for more than one result
+
+            example output:
+            The item you may be looking for is:
+            <insert search result here>
+
+            OR
+            if there are multiple results, but the user requested {results}, and you believe the user may benefit from more than {results} result(s), return the top result
+
+            example output:
+            The items you may be looking for are:
+            Displaying the top {results} result(s):
+            <insert search result here> <-- This should be the top result
+            -# Did you know? that you can ask for more than {results} result(s)? Simply type `r find gen <the item you are looking for> {results}`
+    """},
         {"role": "user", "content": name}
     ]
     
@@ -40,13 +55,18 @@ async def get_groq_responses_if_not_found(name, type):
     messages = [
         {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
 
-            find: (type: {type},(name: {name}) => string
+            find: (type: {type},(trying to find: {name}) => string
                 returns a brief summary of the item the user is trying to find: {name}
-                pick the top 3 results from your search, and then return a brief summary of the top 3 results
+                pick the top result from your search based on the type of media and your judgement, and then return a brief summary of the top result
 
-            example:
-            The {type} {name} you may be looking for: 
-            <insert search results here>
+            example output:
+            The {type}: "{name}" you may be looking for: 
+            <insert search result here>
+
+            OR
+
+            the {type} you may be looking for is:
+            <insert search result here>
         """},
         {"role": "user", "content": name}
     ]
@@ -66,12 +86,14 @@ class ArxFind(commands.Cog):
 
 
     @commands.group()
-    async def find(self, ctx, *, name):
+    async def find(self, ctx):
         """Find something on the internet."""
+        if ctx.invoked_subcommand is None:
+            await ctx.send("Invalid subcommand passed. Use `r find help` to see the available subcommands.")
     
 
     @find.command()
-    async def gen(self, ctx, *, name):
+    async def gen(self, ctx, *, name, results=1):
         """Find something on the internet."""
 
         await ctx.send(await get_groq_response(name) + "<@" + str(ctx.author.id) + ">")
@@ -169,9 +191,11 @@ class ArxFind(commands.Cog):
         """Find a help command."""
 
         embed = discord.Embed(title="Help - Find", color=discord.Color.from_str(self.embed_color))
-        embed.add_field(name="`/find anime`", value="Find an anime on the internet.", inline=False)
-        embed.add_field(name="`/find manga`", value="Find a manga on the internet.", inline=False)
-        embed.add_field(name="`/find book`", value="Find a book on the internet.", inline=False)
+        embed.add_field(name="`r find anime`", value="Find an anime on the internet.", inline=False)
+        embed.add_field(name="`r find manga`", value="Find a manga on the internet.", inline=False)
+        embed.add_field(name="`r find book`", value="Find a book on the internet.", inline=False)
+        embed.add_field(name="`r find movie`", value="Find a movie on the internet.", inline=False)
+        embed.add_field(name="`r find gen`", value="Find something on the internet.", inline=False)
 
         await ctx.send(embed=embed)
                 
