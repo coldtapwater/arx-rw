@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 import random
 
-class CardsAgainstHumanity(commands.Cog):
+class ArxCAH(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color

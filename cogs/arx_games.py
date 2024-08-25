@@ -45,7 +45,7 @@ class HangmanGame:
     def is_lost(self):
         return self.mistakes >= len(self.stages) - 1
 
-class Games(commands.Cog):
+class ArxGames(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color

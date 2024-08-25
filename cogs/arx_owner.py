@@ -5,7 +5,7 @@ import asyncio
 import json
 import logging
 
-class updateUtils(commands.Cog):
+class ArxUpdate(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color
@@ -38,7 +38,7 @@ class updateUtils(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def setupdate(self, ctx, *, update_text: str):
-        """Set the update text."""
+        """Set the update text. (Owner only)"""
         self.save_update(update_text)
         await ctx.send("Update text has been set successfully.")
 

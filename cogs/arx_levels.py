@@ -4,7 +4,7 @@ import aiosqlite
 import utils.my_emojis as my_emojis
 
 
-class Levels(commands.Cog):
+class ArxLevels(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color

@@ -76,7 +76,7 @@ class MinesweeperView(discord.ui.View):
         for button in self.children:
             button.disabled = True
 
-class Minesweeper(commands.Cog):
+class ArxMinesweeper(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

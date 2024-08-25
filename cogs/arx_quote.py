@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-class Quotes(commands.Cog):
+class ArxQuotes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.quote_channels = {}  # Dictionary to store quote channels for each guild

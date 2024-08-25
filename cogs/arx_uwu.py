@@ -56,7 +56,7 @@ def uwuify(text):
 def loud(text):
     return text.upper()
 
-class UwU(commands.Cog):
+class ArxUwU(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.bot.webhooks = {}  # Initialize the webhooks dictionary

@@ -54,7 +54,7 @@ async def get_groq_responses_if_not_found(name):
 
     return response.choices[0].message.content
 
-class Find(commands.Cog):
+class ArxFind(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color

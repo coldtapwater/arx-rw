@@ -7,7 +7,7 @@ from discord.ext import commands
 import aiohttp
 import utils.my_emojis as my_emojis
 
-class MemeCog(commands.Cog):
+class ArxMemes(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color
