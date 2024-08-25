@@ -80,7 +80,7 @@ class Minesweeper(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
+    @commands.command()
     async def sweeper(self, ctx):
         """Play a game of Minesweeper."""
         await ctx.send(f"{my_emojis.PREFIX} Let's play Minesweeper!", view=MinesweeperView())

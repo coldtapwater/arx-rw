@@ -1,5 +1,5 @@
 #LEBRON-KRILL, VERSION 1.0.0
-
+#J_COLDTAPWATER, VERSION 1.0.1
 import discord
 from discord.ext import commands
 from random import choice
@@ -59,7 +59,7 @@ class ArxActions(commands.Cog):
         embed.set_image(url=gif)
         return embed
         
-    @commands.hybrid_command()
+    @commands.command()
     async def hit(self, ctx: commands.Context, target: discord.Member):
         """Hit another member."""
         if ctx.author.id == target.id:
@@ -68,7 +68,7 @@ class ArxActions(commands.Cog):
         embed = self.generate_embed("{} hits {}! {}".format(ctx.author.name, target.name,choice(self.hit_and_bite_messages)), choice(self.hit_gifs))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def bite(self, ctx: commands.Context, target: discord.Member):
         """Bite another member."""
         if ctx.author.id == target.id:
@@ -77,7 +77,7 @@ class ArxActions(commands.Cog):
         embed = self.generate_embed("{} bites {}! {}.".format(ctx.author.name, target.name, choice(self.hit_and_bite_messages)), choice(self.bite_gifs))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def kill(self, ctx: commands.Context, target: discord.Member):
         """Kill another member."""
         if ctx.author.id == target.id:
@@ -86,7 +86,7 @@ class ArxActions(commands.Cog):
         embed = self.generate_embed("{} hits {}! {}".format(ctx.author.name, target.name, choice(self.kill_messages)), choice(self.kill_gifs))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def stare(self, ctx: commands.Context, target: discord.Member):
         """Stare at another member."""
         if ctx.author.id == target.id:
@@ -95,7 +95,7 @@ class ArxActions(commands.Cog):
         embed = self.generate_embed("{} stares at {}.".format(ctx.author.name, target.name), choice(self.stare_gifs))
         await ctx.send(embed=embed)
 
-    @commands.hybrid_command()
+    @commands.command()
     async def wave(self, ctx: commands.Context, target: discord.Member):
         """Wave at another member."""
         if ctx.author.id == target.id:
