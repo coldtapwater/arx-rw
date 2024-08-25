@@ -525,7 +525,7 @@ class FastClickButton(discord.ui.Button):
             else:
                 pass
 
-            await self.view_instance.bot.get_cog('FastClickGame').update_leaderboard(self.user_id, reaction_time)
+            await self.view_instance.bot.get_cog('ArxFastClick').update_leaderboard(self.user_id, reaction_time)
             await self.view_instance.on_timeout()
         else:
             await interaction.response.send_message("Wait for the button to light up!", ephemeral=True)

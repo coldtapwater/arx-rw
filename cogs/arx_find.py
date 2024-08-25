@@ -34,15 +34,19 @@ async def get_groq_response(name):
     )
     return response.choices[0].message.content
 
-async def get_groq_responses_if_not_found(name):
+async def get_groq_responses_if_not_found(name, type):
     client = Groq()
     MODEL = 'llama3-groq-70b-8192-tool-use-preview'
     messages = [
         {"role": "system", "content": f"""You are a search engine. Use the find function to perform search operations and provide the results.
 
-            find: (name: {name}) => string
+            find: (type: {type},(name: {name}) => string
                 returns a brief summary of the item the user is trying to find: {name}
                 pick the top 3 results from your search, and then return a brief summary of the top 3 results
+
+            example:
+            The {type} {name} you may be looking for: 
+            <insert search results here>
         """},
         {"role": "user", "content": name}
     ]
@@ -87,7 +91,7 @@ class ArxFind(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found. Trying to find something for you.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name, "movie") + "<@" + str(ctx.author.id) + ">")
 
     @find.command()
     async def anime(self, ctx, *, name):
@@ -108,7 +112,7 @@ class ArxFind(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name, "anime") + "<@" + str(ctx.author.id) + ">")
     @find.command()
     async def manga(self, ctx, *, name):
         """Find a manga on the internet."""
@@ -128,7 +132,7 @@ class ArxFind(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name, "manga") + "<@" + str(ctx.author.id) + ">")
 
     @find.command()
     async def book(self, ctx, *, name):
@@ -152,7 +156,7 @@ class ArxFind(commands.Cog):
                     else:
                         await ctx.send(f"{my_emojis.ERROR} No results found.")
                         asyncio.sleep(2)
-                        await ctx.send(await get_groq_responses_if_not_found(name) + "<@" + str(ctx.author.id) + ">")
+                        await ctx.send(await get_groq_responses_if_not_found(name, "book") + "<@" + str(ctx.author.id) + ">")
 
                 
     @find.command()
