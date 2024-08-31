@@ -32,6 +32,7 @@ import cogs.arx_actions
 import cogs.arx_find
 import cogs.arx_heck
 import cogs.arx_help
+import cogs.arx_uno
 
 import utils.db_funcs as db_funcs
 from dotenv import load_dotenv
@@ -152,6 +153,7 @@ async def on_ready():
     await bot.add_cog(cogs.arx_find.ArxFind(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_heck.ArxHeck(bot, EMBED_COLOR))
     await bot.add_cog(cogs.arx_help.HelpMenu(bot, EMBED_COLOR))
+    await bot.add_cog(cogs.arx_uno.UnoCog(bot))
 
 
 # ERROR HANDLING
