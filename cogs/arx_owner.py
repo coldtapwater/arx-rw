@@ -35,7 +35,7 @@ class ArxUpdate(commands.Cog):
         with open(self.update_file, 'w') as f:
             json.dump({"update_text": self.current_update, "seen_users": list(self.seen_users)}, f, indent=4)
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def setupdate(self, ctx, *, update_text: str):
         """Set the update text. (Owner only)"""
