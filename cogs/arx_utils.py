@@ -10,6 +10,7 @@ class ArxUtils(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color
+        self.start_time = datetime.now()
 
     def get_uptime(self):
         now = datetime.now()
