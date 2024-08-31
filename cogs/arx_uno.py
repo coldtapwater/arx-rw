@@ -375,21 +375,21 @@ class UnoCog(commands.Cog):
         `r uno hand`: View your current hand.
         `r uno draw [1-2]`: Draw 1 or 2 cards (default is 1).
         `r uno set <card_id>`: Play a card from your hand.
-        `r uno pass`: Pass your turn.
+        `r uno skip`: Skip your turn.
         `r uno end`: End the current game (only the host can do this).
 
         **How to Play**
-        1. Join the game with `r uno join`.
-        2. The host starts the game with `r uno start`.
-        3. On your turn, play a card that matches the color or number of the top card, or play a Wild card.
-        4. If you can't play, draw up to 2 cards or pass your turn.
-        5. Special cards:
+1. Join the game with `r uno join`.
+2. The host starts the game with `r uno start`.
+3. On your turn, play a card that matches the color or number of the top card, or play a Wild card.
+4. If you can't play, draw up to 2 cards or pass your turn.
+5. Special cards:
            - Skip: The next player's turn is skipped.
            - +2: The next player draws 2 cards and loses their turn.
            - Wild: Choose the next color to play.
            - Wild +4: Choose the next color, and the next player draws 4 cards and loses their turn.
-        6. Say "UNO" when you have one card left!
-        7. The first player to get rid of all their cards wins.
+6. Say "UNO" when you have one card left!
+7. The first player to get rid of all their cards wins.
 
         Good luck and have fun!
         """
