@@ -46,7 +46,7 @@ class ArxUtils(commands.Cog):
     @commands.is_owner()
     async def uptime(self, ctx):
         """Shows the bot's uptime"""
-        embed = discord.Embed(title="Uptime", color=self.embed_color)
+        embed = discord.Embed(title="Uptime", color=discord.Color.from_str(self.embed_color))
         embed.add_field(name="Uptime", value=self.get_uptime())
         embed.add_field(name="Last downtime", value=self.get_last_downtime())
         await ctx.send(embed=embed)
@@ -55,11 +55,11 @@ class ArxUtils(commands.Cog):
     @commands.is_owner()
     async def sysinfo(self, ctx):
         """Shows the system information"""
-        embed = discord.Embed(title="System Information", color=self.embed_color)
+        embed = discord.Embed(title="System Information", color=discord.Color.from_str(self.embed_color))
         for key, value in self.get_system_info().items():
             embed.add_field(name=key, value=value, inline=False)
         await ctx.send(embed=embed)
-        
+
     
     
     
