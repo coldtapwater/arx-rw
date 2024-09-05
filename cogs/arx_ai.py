@@ -238,7 +238,7 @@ class ArxAI(commands.Cog):
             
             if await preprocess_messages(message.content, response.choices[0].message.content) == "safe":
                 await message.channel.send(response.choices[0].message.content)
-            elif await preprocess_messages(message.content, response.choices[0].message.content).startswith("unsafe"):
+            else:
                 await message.delete()
 
         except Exception as e:
@@ -267,13 +267,26 @@ class ArxAI(commands.Cog):
         if not channel:
             return
 
-        # Gather last 20 messages
+        # Check for recent activity
+        current_time = time.time()
+        if current_time - self.channel_activity[channel_id]['last_activity'] > 300:  # 5 minutes
+            return  # No recent activity, don't interject
+
+        # Gather last 20 messages from the last 10 minutes
         messages = []
+        ten_minutes_ago = current_time - 60  # 1 minutes in seconds
         async for msg in channel.history(limit=20):
-            messages.append({
-                'role': 'user' if msg.author != self.bot.user else 'assistant',
-                'content': msg.content
-            })
+            if msg.created_at.timestamp() > ten_minutes_ago:
+                messages.append({
+                    'role': 'user' if msg.author != self.bot.user else 'assistant',
+                    'content': msg.content
+                })
+            else:
+                break  # Stop collecting once we hit a message older than 10 minutes
+        
+        if len(messages) < 3:  # Require at least 3 recent messages
+            return  # Not enough recent messages, don't interject
+
         messages.reverse()  # Oldest first
 
         try:
