@@ -85,7 +85,7 @@ class Moderation(commands.Cog):
         await member.send(f"You have been softbanned from {ctx.guild.name}.\nReason: {reason}, You may rejoin at any time.")
 
     @commands.command()
-    @commands.has_permission(ban_members=True)
+    @commands.has_permissions(ban_members=True)
     async def unban(self, ctx, member: discord.Member):
         await member.unban()
         await ctx.send(f"{member.mention} has been unbanned.")
