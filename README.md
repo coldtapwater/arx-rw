@@ -28,9 +28,10 @@ We welcome contributions to Arx, whether you're adding new cogs, utilities, or i
 ### 🚀 **Adding New Cogs**
 1. **Fork the Repository**: Start by forking the Arx GitHub repository.
 2. **Create a New Cog**: Navigate to the `cogs` directory and create a new Python file for your cog. Each cog should be self-contained within a single Python file, so there's no need for a folder or `__init__.py` file.
-3. **Implement Your Features**: Write your commands, events, and other functionalities within the new cog. Follow the existing structure for consistency.
-4. **Test Your Cog**: Make sure to test your cog locally to ensure it works without issues.
-5. **Submit a Pull Request**: Once everything is working, submit a pull request with a description of what your cog does.
+3. **Add to the __init__.py file**: Review all the imports and formatting of that file and follow it for future cogs.
+4. **Implement Your Features**: Write your commands, events, and other functionalities within the new cog. Follow the existing structure for consistency.
+5. **Test Your Cog**: Make sure to test your cog locally to ensure it works without issues.
+6. **Submit a Pull Request**: Once everything is working, submit a pull request with a description of what your cog does.
 
 ### 🛠️ **Adding Utility Functions**
 1. **Fork the Repository**: As with cogs, start by forking the repository.
