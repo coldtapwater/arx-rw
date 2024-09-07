@@ -69,6 +69,30 @@ class Moderation(commands.Cog):
         await self.log_action(ctx.guild, "mute", member, ctx.author, reason, mute_duration)
 
     @commands.command()
+    @commands.has_permissions(manage_roles=True)
+    async def unmute(self, ctx, member: discord.Member):
+        await member.timeout(timedelta(seconds=0), reason=None)
+        await ctx.send(f"{member.mention} has been unmuted.")
+        await self.log_action(ctx.guild, "unmute", member, ctx.author)
+
+    @commands.command()
+    @commands.has_permissions(ban_members=True)
+    async def softban(self, ctx, member: discord.Member, *, reason="No reason provided"):
+        await member.ban(reason=reason, delete_message_days=1)
+        await ctx.send(f"{member.mention} has been softbanned.")
+        await self.log_action(ctx.guild, "softban", member, ctx.author, reason)
+        await member.unban(reason=reason)
+        await member.send(f"You have been softbanned from {ctx.guild.name}.\nReason: {reason}, You may rejoin at any time.")
+
+    @commands.command()
+    @commands.has_permission(ban_members=True)
+    async def unban(self, ctx, member: discord.Member):
+        await member.unban()
+        await ctx.send(f"{member.mention} has been unbanned.")
+        await self.log_action(ctx.guild, "unban", member, ctx.author)
+        await member.send(f"You have been unbanned from {ctx.guild.name}.")
+
+    @commands.command()
     @commands.has_permissions(manage_messages=True)
     async def warn(self, ctx, member: discord.Member, *, reason="No reason provided"):
         self.db.add_warning(ctx.guild.id, member.id, reason)
@@ -77,13 +101,13 @@ class Moderation(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def purge(self, ctx, amount: int = 5, member: discord.Member = None):
+    async def purge(self, ctx, amount: int, member: discord.Member = None):
         if member:
             def check(m):
                 return m.author == member
 
             deleted = await ctx.channel.purge(limit=amount, check=check)
-        else:
+        elif member is None:
             deleted = await ctx.channel.purge(limit=amount)
 
         await ctx.send(f"Deleted {len(deleted)} messages.", delete_after=5)
