@@ -38,9 +38,6 @@ class ErrorHandler:
             await ctx.send("This command cannot be used in private messages.")
             return
 
-        # For any other errors, log them and send a generic message
-        logger.error(f"Unhandled error in {ctx.command}: {error}", exc_info=True)
-        await ctx.send("An unexpected error occurred. The bot administrators have been notified.")
 
         # Optionally, send more detailed error information to a designated error channel
         error_channel_id = os.getenv('ERROR_CHANNEL_ID')  # Replace with your actual error channel ID
