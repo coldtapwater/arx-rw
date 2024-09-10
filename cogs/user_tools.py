@@ -16,6 +16,7 @@ class UserTools(commands.Cog):
 
     @commands.command()
     async def contact(self, ctx, message: str):
+        """Sends a message to the developer"""
         if message:
             embed = discord.Embed(title="Issue Submitted", description=f"{ctx.author.mention}", color=discord.Color.from_str(uc.EMBED_COLOR))
             embed.set_thumbnail(url=ctx.author.display_avatar.url)

@@ -19,16 +19,6 @@ from collections import deque, defaultdict
 import time
 dotenv.load_dotenv()
 
-
-class ArxAI(commands.Cog):
-    def __init__(self, bot, embed_color):
-        self.bot = bot
-        self.embed_color = embed_color
-
-    # J_COLDTAPWATER, VERSION 0.2
-
-
-
 server_user_history = {}
 SYSTEM_PROMPT = """
 Character Profile: "Arx"

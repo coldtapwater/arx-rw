@@ -15,12 +15,14 @@ class Shop(commands.Cog):
 
     @commands.group(name="shop")
     async def shop(self, ctx):
+        """Shop commands"""
         if ctx.invoked_subcommand is None:
             await ctx.send("Invalid subcommand. Use 'r shop view' to see the shop.")
 
     @shop.command(name="view")
     @utils.checks.blacklist_check()
     async def view(self, ctx):
+        """View the shop"""
         await get_shop_items()
         shop_embed = discord.Embed(
             title="Shop",
@@ -35,26 +37,31 @@ class Shop(commands.Cog):
     @shop.command(name="add_item")
     @commands.is_owner()
     async def add_item(self, ctx, name: str, description: str, price: int):
+        """Add an item to the shop (Owner Only)"""
         await add_items_to_shop(ctx, name, description, 0)
 
     @shop.command(name="remove_item")
     @commands.is_owner()
     async def remove_item(self, ctx, name: str):
+        """Remove an item from the shop (Owner Only)"""
         await remove_items_from_shop(ctx, name)
 
     @shop.command(name="buy")
     @utils.checks.blacklist_check()
     async def buy(self, ctx, name: str):
+        """Buy an item from the shop"""
         await buy_item(ctx, name)
 
     @shop.command(name="sell")
     @utils.checks.blacklist_check()
     async def sell(self, ctx, name: str):
+        """Sell an item back to the shop"""
         await sell_item(ctx, name)
 
     @commands.command(name="inventory", aliases=["inv, i"])
     @utils.checks.blacklist_check()
     async def inventory(self, ctx, user: discord.User = None):
+        """Shows your inventory or another user's inventory"""
         if user is None:
             user = ctx.author
         await get_user_inventory(ctx, user_id=user.id)

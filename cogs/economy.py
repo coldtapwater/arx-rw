@@ -93,7 +93,7 @@ class Economy(commands.Cog):
         
         await ctx.send(message)
     
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     @utils.checks.blacklist_check()
     async def addmoney(self, ctx, user: discord.User, amount: int):
@@ -101,7 +101,7 @@ class Economy(commands.Cog):
         await db.update_balance(user.id, wallet=amount)
         await ctx.send(f"added {my_emojis.CURRENCY_EMOJI} {amount} {uc.CURRENCY} to {user}")
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     @utils.checks.blacklist_check()
     async def removemoney(self, ctx, user: discord.User, amount: int):
@@ -109,7 +109,7 @@ class Economy(commands.Cog):
         await db.update_balance(user.id, wallet=-amount)
         await ctx.send(f"removed {my_emojis.CURRENCY_EMOJI} {amount} {uc.CURRENCY} from {user}")
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     @utils.checks.blacklist_check()
     async def addgems(self, ctx, user: discord.User, amount: int):
@@ -117,7 +117,7 @@ class Economy(commands.Cog):
         await db.update_balance(user.id, gems=amount)
         await ctx.send(f"added {my_emojis.GEMS} {amount} {uc.GEMS} to {user}")
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     @utils.checks.blacklist_check()
     async def removegems(self, ctx, user: discord.User, amount: int):
@@ -125,7 +125,7 @@ class Economy(commands.Cog):
         await db.update_balance(user.id, gems=-amount)
         await ctx.send(f"removed {my_emojis.GEMS} {amount} {uc.GEMS} from {user}")
 
-    @commands.command(aliases=['econ'])
+    @commands.command(aliases=['econ'], hidden=True)
     @commands.is_owner()
     @utils.checks.blacklist_check()
     async def economy(self, ctx):

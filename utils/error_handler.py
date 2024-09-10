@@ -3,6 +3,7 @@ from discord.ext import commands
 import logging
 import traceback
 import os
+import sys
 
 logger = logging.getLogger('bot')
 
@@ -60,6 +61,15 @@ class ErrorHandler:
 
         # Optionally, you can add a general error handler for non-command errors
         @bot.event
-        async def on_error(event, *args, **kwargs):
-            error = traceback.format_exc()
-            await ErrorHandler.handle_general_error(error)
+        async def on_command_error(ctx, error):
+            if isinstance(error, commands.CommandInvokeError):
+                original = error.original
+                if not isinstance(original, discord.HTTPException):
+                    print(f'In {ctx.command.qualified_name}:', file=sys.stderr)
+                    traceback.print_tb(original.__traceback__)
+                    print(f'{original.__class__.__name__}: {original}', file=sys.stderr)
+            elif isinstance(error, commands.CommandNotFound):
+                pass  # You can handle command not found errors here
+            else:
+                print(f'Ignoring exception in command {ctx.command}:', file=sys.stderr)
+                traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)

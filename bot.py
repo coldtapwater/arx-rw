@@ -103,49 +103,6 @@ async def reload(ctx):
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
 
-class HelpCog(commands.Cog, name='Help'):
-    def __init__(self, bot):
-        self.bot = bot
-
-    @commands.command(name="help")
-    async def help(self, ctx, command_name=None):
-        if command_name:
-            return await self.command_help(ctx, command_name)
-        
-        cog_list = [cog for cog in self.bot.cogs if cog != 'Help']
-        
-        help_text = "Available commands:\n\n"
-        
-        for cog_name in cog_list:
-            cog = self.bot.get_cog(cog_name)
-            commands_list = cog.get_commands()
-            if commands_list:
-                help_text += f"{cog_name.lower()}:\n"
-                for command in commands_list:
-                    help_text += f"  {command.name} - {command.short_doc or 'No description'}\n"
-                help_text += "\n"
-        
-        help_text += "Use `help <command>` for more info on a command."
-        
-        await ctx.send(f"```{help_text}```")
-
-    async def command_help(self, ctx, command_name):
-        command = self.bot.get_command(command_name)
-        
-        if not command:
-            return await ctx.send(f"Command `{command_name}` not found.")
-        
-        help_text = f"Help for `{command.name}`:\n\n"
-        help_text += f"Description: {command.help or 'No description available.'}\n"
-        help_text += f"Usage: {ctx.prefix}{command.name} {command.signature}\n"
-        
-        if command.aliases:
-            help_text += f"Aliases: {', '.join(command.aliases)}\n"
-        
-        await ctx.send(f"```{help_text}```")
-
-async def setup(bot):
-    await bot.add_cog(HelpCog(bot))
 
 async def main():
     async with bot:
@@ -161,9 +118,6 @@ async def main():
             if filename.endswith('.py'):
                 await bot.load_extension(f'cogs.{filename[:-3]}')
                 logger.info(f'Loaded cog: {filename[:-3]}')
-
-        # Load the help cog
-        await setup(bot)
 
         await bot.start(TOKEN)
 

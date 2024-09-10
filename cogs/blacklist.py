@@ -9,7 +9,7 @@ class BlacklistCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def blacklist(self, ctx, user: discord.User):
         await BlacklistedUser.create(user_id=user.id, reason="Manually blacklisted")
@@ -17,7 +17,7 @@ class BlacklistCog(commands.Cog):
         await ctx.send(f"{user} has been blacklisted.")
         logger.info(f"[{user.id}] - [BLACKLISTED] - [{ctx.guild.id}] - blacklist command used")
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def audit(self, ctx, user: discord.User):
         await AuditedUser.create(user_id=user.id, reason="Manually audited")
@@ -25,7 +25,7 @@ class BlacklistCog(commands.Cog):
         await ctx.send(f"{user} has been audited.")
         logger.info(f"[{user.id}] - [AUDITED] - [{ctx.guild.id}] - audit command used")
 
-    @commands.command()
+    @commands.command(hidden=True)
     @commands.is_owner()
     async def remove(self, ctx, action: str, user: discord.User):
         if action.lower() == 'audit':

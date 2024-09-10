@@ -73,11 +73,6 @@ class Connect4(commands.Cog):
                 winner = check_winner(board)
                 if winner != 0:
                     await interaction.response.edit_message(content=f"{my_emojis.PREFIX} {turn.mention} wins!\n{render_board(board)}", view=None)
-                    user_data = await db_funcs.get_user_data(interaction.user.id)
-                    wallet, bank, gems = user_data
-                    if winner == 1:
-                        await interaction.response.send_message(f"you got some buckaroos! +1000", ephemeral=True)
-                        await db_funcs.save_user_data(interaction.user.id, wallet+1000, bank, gems)
 
                     return
 
