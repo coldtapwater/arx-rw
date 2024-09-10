@@ -79,8 +79,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='t$', intents=intents, help_command=None)
-bot.remove_command('help')
+bot = commands.Bot(command_prefix='t$', intents=intents)
 
 @bot.event
 async def on_ready():
