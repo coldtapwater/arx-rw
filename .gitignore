@@ -4,3 +4,4 @@
 !.env.example
 /Users/jace/arx-po-rw/arx
 *.pyc
+.arx
