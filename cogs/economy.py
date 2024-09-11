@@ -75,7 +75,7 @@ class Economy(commands.Cog):
         await db.update_balance(ctx.author.id, wallet=daily_bonus)
         await ctx.send(f"Earned.. | Daily: {my_emojis.CURRENCY_EMOJI} {daily_bonus} {uc.CURRENCY}\n-# do `r bal` to see your total balance")
     
-    @commands.command()
+    @commands.command(name="leaderboard", aliases=["lb"])
     @utils.checks.blacklist_check()
     async def leaderboard(self, ctx):
         """Display the wealth leaderboard"""
@@ -92,7 +92,7 @@ class Economy(commands.Cog):
             message += f"{i}. **{name}** - Net Worth: {wealth:,} {my_emojis.CURRENCY_EMOJI} {supporter_emoji}\n"
         
         await ctx.send(message)
-    
+
     @commands.command(hidden=True)
     @commands.is_owner()
     @utils.checks.blacklist_check()

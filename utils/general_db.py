@@ -25,5 +25,5 @@ async def get_supporters():
     return await Supporters.all()
 
 async def add_supporter(user_id: int):
-    await Supporters.create(user_id=user_id)
+    await Supporters.create(user_id=user_id)    
 # Add more general/misc database functions here

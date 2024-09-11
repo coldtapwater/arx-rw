@@ -99,10 +99,30 @@ async def reload(ctx):
             if filename.endswith('.py'):
                 await bot.reload_extension(f'cogs.{filename[:-3]}')
         await ctx.send("Reload complete.")
+        try: 
+            await ctx.send("Reloading the DB...")
+            await init_db(DB_USER, DB_PASSWORD, DB_HOST, DB_PORT)
+            await ctx.send("Reload complete.")
+        except Exception as e:
+            await ctx.send(f"Error: {str(e)}")
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
 
+@bot.command(name='testerror')
+async def test_error(ctx):
+    raise ValueError("This is a test error to check the error handler.")
 
+@bot.event
+async def on_command_error(ctx, error):
+    print(f"Error caught: {type(error).__name__}")
+    if isinstance(error, commands.CommandInvokeError):
+        original = error.original
+        print(f"Original error: {type(original).__name__}")
+        if isinstance(original, ValueError) and "This is a test error" in str(original):
+            await ctx.send("Test error successfully caught by the inline error handler!")
+            return
+    # Handle other errors as needed
+    print("Error wasn't handled by any specific case")
 async def main():
     async with bot:
         # Initialize the database
@@ -123,6 +143,8 @@ async def main():
 if __name__ == "__main__":
     try:
         asyncio.run(main())
+        ErrorHandler.setup(bot)
+        logger.info("Error handler setup completed")
     except KeyboardInterrupt:
         logger.info("Bot shutdown initiated by user.")
     except Exception as e:

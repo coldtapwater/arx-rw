@@ -92,4 +92,31 @@ class Supporters(Model):
     class Meta:
         table = "supporters"
 
+class UserLevel(Model):
+    user_id = fields.BigIntField()
+    guild_id = fields.BigIntField()
+    xp = fields.BigIntField(default=0)
+    level = fields.IntField(default=0)
+    last_xp_gain = fields.BigIntField(default=0)  # Timestamp for cooldown
+    prestige = fields.IntField(default=0)
+
+    class Meta:
+        table = "userlevel"
+        unique_together = ("user_id", "guild_id")
+
+    def __str__(self):
+        return f"User {self.user_id} in Guild {self.guild_id}: Level {self.level} (XP: {self.xp})"
+
+class GuildLevelConfig(Model):
+    guild_id = fields.BigIntField(pk=True)
+    xp_cooldown = fields.IntField(default=20)  # Cooldown in seconds
+    max_xp_per_message = fields.IntField(default=50)
+
+class LevelReward(Model):
+    guild_id = fields.BigIntField(pk=True)
+    level = fields.IntField()
+    role_id = fields.BigIntField()
+
+    class Meta:
+        unique_together = ("guild_id", "level")
     

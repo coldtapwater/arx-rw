@@ -2,6 +2,6 @@
 *.env
 .env
 !.env.example
-/Users/jace/arx-po-rw/arx
+/Users/jace/arx-po-rw/venv
 *.pyc
-.arx
+venv
