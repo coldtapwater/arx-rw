@@ -10,6 +10,11 @@ from utils import emojis
 from utils.error_handler import ErrorHandler
 from utils.checks import blacklist_check
 import utils.configs as uc
+from PIL import Image, ImageDraw, ImageFont
+import textwrap
+import io
+
+
 
 # Load environment variables
 load_dotenv()
@@ -19,6 +24,8 @@ DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '5432')
 
+OWNER_ID = os.getenv('OWNER_ID')
+version = '2.0.0'
 
 # Set up logging
 def setup_logging():
@@ -79,7 +86,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='t$', intents=intents)
+bot = commands.Bot(command_prefix='t$', intents=intents, owner_id=OWNER_ID)
 
 @bot.event
 async def on_ready():
@@ -108,9 +115,49 @@ async def reload(ctx):
     except Exception as e:
         await ctx.send(f"Error: {str(e)}")
 
-@bot.command(name='testerror')
+@bot.command(name='testerror', hidden=True)
+@commands.is_owner()
 async def test_error(ctx):
     raise ValueError("This is a test error to check the error handler.")
+
+@bot.command()
+async def info(ctx):
+    # Prepare the info text
+    info = [
+        f"name: {bot.user.name}",
+        f"version: {version}",
+        f"prefix: {bot.command_prefix}",
+        f"owner: j_coldtapwater",
+        f"guilds: {len(bot.guilds)}",
+        f"users: {len(set(bot.get_all_members()))}",
+        f"discord.py version: {discord.__version__}"
+    ]
+
+    # Create a new image
+    width, height = 800, 400
+    image = Image.new('RGB', (width, height), color=f"#36393e")
+    draw = ImageDraw.Draw(image)
+
+    # Load and paste the logo
+    logo = Image.open('/Users/jace/arx-po-rw/logo-arx.png')
+    logo = logo.resize((500, 500))  # Resize if necessary
+    image.paste(logo, (width - 500, 0), logo if logo.mode == 'RGBA' else None)
+
+    # Add the text
+    font = ImageFont.truetype("/Users/jace/arx-po-rw/Gendy.otf", 20)  # Replace with path to a font file
+    y_text = 50
+    for line in info:
+        draw.text((52, y_text+2), line, font=font, fill=(0, 0, 0, 128))
+        draw.text((50, y_text), line, font=font, fill=(255, 255, 255, 255))
+        y_text += 40
+
+    # Save the image to a byte stream
+    byte_io = io.BytesIO()
+    image.save(byte_io, 'PNG')
+    byte_io.seek(0)
+
+    # Send the image
+    await ctx.send(file=discord.File(fp=byte_io, filename='info.png'))
 
 @bot.event
 async def on_command_error(ctx, error):

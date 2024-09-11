@@ -35,21 +35,7 @@ class UserTools(commands.Cog):
         embed.set_image(url=member.display_avatar.url)
 
         await ctx.send(embed=embed)
-    
-    @commands.command()
-    @utils.checks.blacklist_check()
-    async def info(self, ctx):
-        """Shows info about the bot"""
-        embed = discord.Embed(title="Bot Info", description="Some info about this bot", color=discord.Color.from_str(uc.EMBED_COLOR))
-        embed.add_field(name="Creator: ", value="j_coldtapwater")
-        embed.add_field(name="Version: ", value="2.0.0")
-        embed.add_field(name="Language: ", value="Python")
-        embed.add_field(name="Servers: ", value=f"{len(self.bot.guilds)}")
-        embed.add_field(name="Users: ", value=f"{len(self.bot.users)}")
-        embed.add_field(name="Prefix: ", value=f"{self.bot.command_prefix}")
-        embed.set_thumbnail(url=self.bot.user.display_avatar.url)
 
-        await ctx.send(embed=embed)
 
 
 
