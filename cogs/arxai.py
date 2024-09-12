@@ -391,7 +391,7 @@ class ArxAI(commands.Cog):
     @commands.is_owner()
     async def clear_buffers(self, ctx):
         """Clear all user buffers and channel activity (Owner only)."""
-        self.server_user_history.clear()
+        server_user_history.clear()
         self.channel_activity.clear()
         await ctx.send("All buffers have been cleared.")
 
