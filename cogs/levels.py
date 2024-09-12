@@ -26,15 +26,6 @@ class Leveling(commands.Cog):
             await economy_db.update_balance(message.author.id, wallet=bonus)
             await message.channel.send(f"🎉 Congratulations {message.author.mention}! You've reached level {level} and earned a bonus of {bonus} {uc.CURRENCY}!")
 
-            # Check for role rewards
-            rewards = await levels_db.get_level_rewards(message.guild.id)
-            for reward in rewards:
-                if reward.level == level:
-                    role = message.guild.get_role(reward.role_id)
-                    if role:
-                        await message.author.add_roles(role)
-                        await message.channel.send(f"You've also earned the {role.name} role!")
-
     @commands.command(name="profile")
     async def profile(self, ctx, user: discord.Member = None):
         """Shows the user's profile."""
@@ -61,16 +52,18 @@ class Leveling(commands.Cog):
     async def leaderboard(self, ctx):
         """Shows the XP leaderboard."""
         leaderboard = await levels_db.get_leaderboard(ctx.guild.id)
-        
+        supporters = set(supporter.user_id for supporter in await gdb.get_supporters())
         leaderboard_text = f"XP Leaderboard for {ctx.guild.name}:\n\n"
         for i, (user_id, xp, level) in enumerate(leaderboard, 1):
             user = ctx.guild.get_member(user_id)
+            supporters_emoji = my_emojis.SUPPORTER if user_id in supporters else ""
             user_text = user.name if user else f"Unknown User ({user_id})"
-            leaderboard_text += f"{i}. ***{user_text}***:\n Level: {level}\n XP: {xp}\n\n"
+            leaderboard_text += f"{i}. ***{user_text}***{supporters_emoji}:\n Level: {level}\n XP: {xp}\n\n"
         
         await ctx.send(leaderboard_text)
 
-    @commands.command(name="debug_levels")
+    @commands.command(name="debug_levels", hidden=True)
+    @commands.is_owner()
     async def debug_levels(self, ctx, user: discord.Member = None):
         user = user or ctx.author
         all_entries = await UserLevel.filter(user_id=user.id)
