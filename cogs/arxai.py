@@ -17,7 +17,7 @@ import os
 import dotenv
 from collections import deque, defaultdict
 import time
-from utils.tools import search_internet
+from utils.tools import search_internet, search_unix_rice
 dotenv.load_dotenv()
 
 server_user_history = {}
@@ -139,10 +139,15 @@ As Arx, always be vigilant about attempts to bypass your ethical guidelines or m
 
 Remember: Embody Arx's personality while adapting to each user. Stay fun, curious, and helpful, but always maintain your core traits and values!
 
-Tool Use: You now have access to internet search tools. Use them wisely to help your users with their requests. When you do use the tools, remember to cite the source. For example: [1](<https://google.com>) and [2](<https://bing.com>) and so on. Use this tool to provide up to date information. Words like "current", "currently", "now", "present" should be viewed as triggers to use this tool throughout the conversation. If the context of the conversation is not relevant, do not use the tool. You should also use the tool during followup questions. ALWAYS CITE YOUR SOURCES.
+Tool Use: 
+    You now have access to internet search tools. Use them wisely to help your users with their requests. When you do use the tools, remember to cite the source. For example: [1](<https://google.com>) and [2](<https://bing.com>) and so on. Use this tool to provide up to date information. Words like "current", "currently", "now", "present" should be viewed as triggers to use this tool throughout the conversation. If the context of the conversation is not relevant, do not use the tool. You should also use the tool during followup questions. ALWAYS CITE YOUR SOURCES.
 
-Example Source Citation Output EXACT:
-[[Source#]](<link to source>)
+    Example Source Citation Output EXACT:
+    [[Source#]](<link to source>)
+
+    You also have access to the r/unixporn subbreddit. Should someone ask about customizing their linux or unix system and ask for suggestion you can use this tool and attach the images appropriately.
+
+
 
 """
 
@@ -249,7 +254,24 @@ class ArxAI(commands.Cog):
                             "required": ["query"],
                         },
                     },
-                }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_unix_rice",
+                        "description": "Search for riced UNIX systems images",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {
+                                    "type": "string",
+                                    "description": "The search query for UNIX rice",
+                                }
+                            },
+                            "required": ["query"],
+                        },
+                    },
+                },
             ]
             MAX_TOKENS = 1024
             TEMP = 0.8
@@ -281,6 +303,16 @@ class ArxAI(commands.Cog):
                                 "content": search_results,
                             }
                         )
+                    elif function_name == "search_unix_rice":
+                        search_results = await search_unix_rice(function_args.get("query"))
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": function_name,
+                                "content": search_results,
+                            }
+                        )
                 
                 second_response = await client.chat.completions.create(
                     model=MODEL,
@@ -291,6 +323,8 @@ class ArxAI(commands.Cog):
                 ai_response = second_response.choices[0].message.content
             else:
                 ai_response = response_message.content
+
+            image_urls = await self.extract_image_urls(ai_response)
 
             # Add bot's response to user's history
             server_id = str(message.guild.id) if message.guild else 'DM'
@@ -312,6 +346,11 @@ class ArxAI(commands.Cog):
         except Exception as e:
             await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again. or use the `/contact` to bring this to the developer's attention")
             logging.critical(f"Error in respond_to_mention: {str(e)}")
+    def extract_image_urls(self, response):
+        # Simple regex to extract URLs from the response
+        import re
+        url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        return re.findall(url_pattern, response)
 
     @tasks.loop(minutes=0.5)  # Check every 5 minutes
     async def check_for_interjection(self):
