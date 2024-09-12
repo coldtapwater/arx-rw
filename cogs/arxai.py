@@ -17,7 +17,7 @@ import os
 import dotenv
 from collections import deque, defaultdict
 import time
-from utils.tools import search_internet, search_unix_rice
+from utils.tools import search_internet
 dotenv.load_dotenv()
 
 server_user_history = {}
