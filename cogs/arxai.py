@@ -324,7 +324,7 @@ class ArxAI(commands.Cog):
             else:
                 ai_response = response_message.content
 
-            image_urls = await self.extract_image_urls(ai_response)
+            image_urls = self.extract_image_urls(ai_response)
 
             # Add bot's response to user's history
             server_id = str(message.guild.id) if message.guild else 'DM'
