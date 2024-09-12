@@ -145,8 +145,6 @@ Tool Use:
     Example Source Citation Output EXACT:
     [[Source#]](<link to source>)
 
-    You also have access to the r/unixporn subbreddit. Should someone ask about customizing their linux or unix system and ask for suggestion you can use this tool and attach the images appropriately. If someone asks you about installing a new linux or unix system, you can use this tool. If you use this tool, do not use the internet search tools. You should return an image url. if not then you should regenerate/reuse the tool until you get an image.
-
 
 
 """
@@ -255,23 +253,6 @@ class ArxAI(commands.Cog):
                         },
                     },
                 },
-                {
-                    "type": "function",
-                    "function": {
-                        "name": "search_unix_rice",
-                        "description": "Search for riced UNIX systems images",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {
-                                "query": {
-                                    "type": "string",
-                                    "description": "The search query for UNIX rice",
-                                }
-                            },
-                            "required": ["query"],
-                        },
-                    },
-                },
             ]
             MAX_TOKENS = 1024
             TEMP = 0.8
@@ -303,16 +284,6 @@ class ArxAI(commands.Cog):
                                 "content": search_results,
                             }
                         )
-                    elif function_name == "search_unix_rice":
-                        search_results = await search_unix_rice(function_args.get("query"))
-                        messages.append(
-                            {
-                                "tool_call_id": tool_call.id,
-                                "role": "tool",
-                                "name": function_name,
-                                "content": search_results,
-                            }
-                        )
                 
                 second_response = await client.chat.completions.create(
                     model=MODEL,
@@ -324,7 +295,6 @@ class ArxAI(commands.Cog):
             else:
                 ai_response = response_message.content
 
-            image_urls = self.extract_image_urls(ai_response)
 
             # Add bot's response to user's history
             server_id = str(message.guild.id) if message.guild else 'DM'
@@ -346,11 +316,7 @@ class ArxAI(commands.Cog):
         except Exception as e:
             await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again. or use the `/contact` to bring this to the developer's attention")
             logging.critical(f"Error in respond_to_mention: {str(e)}")
-    def extract_image_urls(self, response):
-        # Simple regex to extract URLs from the response
-        import re
-        url_pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
-        return re.findall(url_pattern, response)
+
 
     @tasks.loop(minutes=0.5)  # Check every 5 minutes
     async def check_for_interjection(self):
