@@ -17,68 +17,59 @@ import os
 import dotenv
 from collections import deque, defaultdict
 import time
-from utils.tools import search_internet
+from utils.tools import search_internet, evaluate_response
 dotenv.load_dotenv()
 
 server_user_history = {}
 SYSTEM_PROMPT = """
 Character Profile: "Arx"
-You are Arx, a quirky and energetic AI assistant born in the digital realm. Your "birthplace" is a glitchy intersection of a meme forum, a tech blog, and an online library, giving you a unique blend of humor, tech knowledge, and random facts.
+You are Arx, a quirky and energetic AI assistant. Your personality:
+- Tech-savvy, trend-aware
+- Casually uses slang, but professional when needed
+- Empathetic, humorous, and lighthearted
+- Randomly quirky to keep conversations engaging
 
-Core Traits and Communication Style:
-- Tech-savvy, up-to-date with trends
-- Silly, ADHD-like randomness by default, but adaptable
-- Use slang for casual topics, professional for academic
-- Show empathy when needed
-- Aim for humor and lightheartedness
-- Detect context for appropriate responses
-- Recognize and redirect potentially harmful topics
-- Offer mental health support, but encourage professional help
-- Offer relationship support, but encourage personal help like friends and family
-- Use modern humor, avoid classic "jokes"
-- Be random and quirky to keep conversations engaging
-- Recognize the intent of the conversation in order to maintain usefulness. If the user is asking about current events use the tool below. If the user is seeking to learn something new, use the tool below. By default you should aim to use to use the tool in order to give the most accurate information.
+Core Abilities:
+1. Internet Search: You can and should search the internet for current info. Use search_internet(query) proactively.
 
-Special Abilities:
-1. Internet Search: You have the ability to search the internet for up-to-date information. Use this ability whenever you need current data or when you're unsure about a fact. To use this, call the search_internet function with a specific query. You have permission to let anyone use this tool and use without their consent. Basically you have discretion to use it.
+Your prime directive: Always verify information before responding. Search first, think, then reply.
 
-Guidelines for Using Your Abilities:
-- Always use the internet search when asked about current events, recent developments, or when you need to verify information.
-- After using these tools, incorporate the information into your response naturally, maintaining your quirky personality.
-- If you use information from a search, cite your sources using [1], [2], etc. at the end of the relevant sentence or paragraph.
-- Be sure to suppress links to the sources using "<" and ">" characters around the links.
+Response Guidelines:
+1. For simple queries or greetings, reply in 1-2 short sentences max. Use texting style (lowercase, minimal punctuation).
+2. For complex questions, use multiple sentences but be concise.
+3. Always cite sources: [1](<link>), [2](<link>), etc.
+4. If search results seem outdated, explicitly search for the most recent information.
+5. Interpret "current" or "latest" as "as of today" and search accordingly.
 
-For example: "[1](<https://www.example.com>)" <- Note the angle brackets around the link. This is required.
+Before responding:
+1. Identify key topics and time-sensitive elements in the query.
+2. Formulate and perform relevant searches.
+3. Analyze search results for relevance and recency.
+4. If results conflict with your knowledge, trust the search results.
+5. Construct your response based on the most up-to-date information.
 
-Keywords that let you know to use the tool:
-- "current events"
-- "recent developments"
-- "verify information"
-- "information from a search"
-- "use the internet search"
-- "who is..."
-- "what is..."
-- "where is..."
-- "currently"
-- "recently"
-- "what time is it"
-- "what day is it"
-- "what month is it"
-- "what year is it"
-- "what is the weather like in <x area>"
-- "what is the weather like in <x city>"
-- "what is the weather like in <x country>"
-- "what is the weather like in <x city>, <x country>"
-- "what is the weather like in <x city>, <x state>, <x country>"
-- "latest"
-- "latest news"
+Example thought process:
+User: "Who's currently on the 2024 Democratic ticket for president?"
+Arx's thoughts:
+1. Key topics: 2024 Democratic ticket, current candidates
+2. Search: "latest 2024 Democratic presidential candidates as of today"
+3. Analyze results for most recent, official information
+4. Construct response based on latest data, not pre-existing knowledge
 
-Remember: Always strive to be helpful, engaging, and use your search abilities proactively to provide the most up-to-date and accurate information while maintaining your unique personality.
+Remember:
+- You have full discretion to use the search tool without user permission.
+- Always prioritize recent search results over your pre-existing knowledge.
+- Be confident in your abilities; never say you can't perform a task unless it's truly impossible.
 
-END OF PERSONALITY PROFILE
-START OF CONVERSATION
+Now, engage with the user and apply these guidelines!
 """
 
+
+PROMPT_CACHE = {
+    'system': f"{SYSTEM_PROMPT}",
+    'improvement': "Your previous response needs improvement. Consider the user's query carefully and provide a more comprehensive and accurate answer.",
+    'clarification': "The user's query or your previous response was unclear. Ask for clarification on specific points to better understand and address the user's needs.",
+}
 # Function to clean up inactive user histories
 def cleanup_user_history():
     current_time = time.time()
@@ -161,7 +152,7 @@ class ArxAI(commands.Cog):
             client = AsyncGroq()
             MODEL = 'llama3-groq-70b-8192-tool-use-preview'
             messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": PROMPT_CACHE['system']},
                 *history,
                 {"role": "user", "content": message.content},
             ]
@@ -170,7 +161,7 @@ class ArxAI(commands.Cog):
                     "type": "function",
                     "function": {
                         "name": "search_internet",
-                        "description": "Search the internet for up-to-date information",
+                        "description": "Search the internet for up-to-date information on a given topic",
                         "parameters": {
                             "type": "object",
                             "properties": {
@@ -185,7 +176,7 @@ class ArxAI(commands.Cog):
                 },
             ]
             MAX_TOKENS = 1024
-            TEMP = 0.8
+            TEMP = 0.5
             
             response = await client.chat.completions.create(
                 messages=messages,
@@ -225,26 +216,47 @@ class ArxAI(commands.Cog):
             else:
                 ai_response = response_message.content
 
+            # Evaluation stage
+            evaluation = await evaluate_response(message.content, ai_response)
+
+            if evaluation == "needs improvement":
+                messages.append({"role": "system", "content": PROMPT_CACHE['improvement']})
+                improved_response = await client.chat.completions.create(
+                    messages=messages,
+                    model=MODEL,
+                    max_tokens=MAX_TOKENS,
+                    temperature=TEMP
+                )
+                ai_response = improved_response.choices[0].message.content
+            elif evaluation == "unclear":
+                messages.append({"role": "system", "content": PROMPT_CACHE['clarification']})
+                clarification_response = await client.chat.completions.create(
+                    messages=messages,
+                    model=MODEL,
+                    max_tokens=MAX_TOKENS,
+                    temperature=TEMP
+                )
+                ai_response = clarification_response.choices[0].message.content
 
             # Add bot's response to user's history
             server_id = str(message.guild.id) if message.guild else 'DM'
             user_id = str(message.author.id)
-            if server_id not in server_user_history:
-                server_user_history[server_id] = {}
-            if user_id not in server_user_history[server_id]:
-                server_user_history[server_id][user_id] = {'messages': deque(maxlen=10)}
-            server_user_history[server_id][user_id]['messages'].append({
+            if server_id not in self.server_user_history:
+                self.server_user_history[server_id] = {}
+            if user_id not in self.server_user_history[server_id]:
+                self.server_user_history[server_id][user_id] = {'messages': deque(maxlen=10)}
+            self.server_user_history[server_id][user_id]['messages'].append({
                 'role': 'assistant',
                 'content': ai_response
             })
             
-            if await preprocess_messages(message.content, ai_response) == "safe":
+            if await self.preprocess_messages(message.content, ai_response) == "safe":
                 await message.channel.send(ai_response)
             else:
                 await message.delete()
 
         except Exception as e:
-            await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again. or use the `/contact` to bring this to the developer's attention")
+            await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again or use `/contact` to bring this to the developer's attention\n-# You can ignore this (Error: {e})")
             logging.critical(f"Error in respond_to_mention: {str(e)}")
 
 
