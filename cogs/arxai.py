@@ -387,7 +387,13 @@ class ArxAI(commands.Cog):
             logging.critical(f"Error generating interjection: {e}")
         
 
-
+    @commands.command(name='clear_buffers')
+    @commands.is_owner()
+    async def clear_buffers(self, ctx):
+        """Clear all user buffers and channel activity (Owner only)."""
+        self.server_user_history.clear()
+        self.channel_activity.clear()
+        await ctx.send("All buffers have been cleared.")
 
 
     
