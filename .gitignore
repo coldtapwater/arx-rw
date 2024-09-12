@@ -1,10 +1,7 @@
+*.log
+*.env
 .env
 !.env.example
-arx/
+/Users/jace/arx-po-rw/venv
 *.pyc
-*.db
-*.json
-.vscode/
-venv/
-.venv/
-!.env.example
+venv
