@@ -213,6 +213,7 @@ class ArxAI(commands.Cog):
                     max_tokens=MAX_TOKENS,
                     temperature=TEMP
                 )
+                print("Used tool: internet search")
                 ai_response = second_response.choices[0].message.content
             else:
                 ai_response = response_message.content
@@ -228,6 +229,7 @@ class ArxAI(commands.Cog):
                     max_tokens=MAX_TOKENS,
                     temperature=TEMP
                 )
+                print("Used tool: improvement")
                 ai_response = improved_response.choices[0].message.content
             elif evaluation == "unclear":
                 messages.append({"role": "system", "content": PROMPT_CACHE['clarification']})
