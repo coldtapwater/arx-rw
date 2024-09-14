@@ -45,8 +45,11 @@ class Shop(commands.Cog):
                 raise ValueError("Invalid format. Please use: name | description | price")
 
             name = parts[0].strip()
-            description = parts[1].strip()
-            price = int(parts[2].strip())
+            price = int(parts[1].strip())
+            description = parts[2].strip()
+            emoji = parts[3].strip()
+            sellable = parts[4].strip()
+            stackable = parts[5].strip()
 
             # Call the add_items_to_shop function with separate arguments
             await add_items_to_shop(ctx, name=name, description=description, price=price)
