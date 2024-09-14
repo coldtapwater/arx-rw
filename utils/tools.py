@@ -1,6 +1,6 @@
 import aiohttp
 import json
-from duckduckgo_search import DDGS
+from duckduckgo_search import AsyncDDGS
 from github import Github
 from googleapiclient.discovery import build
 import asyncio
@@ -25,7 +25,7 @@ async def search_internet(query: str, images: bool = False):
     """
     Perform an internet search using DuckDuckGo and return the top results.
     """
-    async with DDGS() as ddgs:
+    async with AsyncDDGS() as ddgs:
         if images:
             results = [r for r in ddgs.images(query, max_results=5)]
         else:
