@@ -9,11 +9,20 @@ import aiohttp
 from collections import deque
 from groq import AsyncGroq
 import utils.emojis as my_emojis
+from utils.tools import *
 import os
 from dotenv import load_dotenv
 import logging
 
+import json
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import nltk
+from nltk.tokenize import sent_tokenize
+import numpy as np
+
 load_dotenv()
+nltk.download('punkt', quiet=True)
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 LLAMA_GUARD_MODEL = 'llama-guard-3-8b'
@@ -49,6 +58,7 @@ class ArxAI(commands.Cog):
         self.conversation_contexts = {}
         self.jailbreak_detector = JailbreakDetector()
         self.client = AsyncGroq(api_key=GROQ_API_KEY)
+        self.vectorizer = TfidfVectorizer()
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -181,7 +191,7 @@ class ArxAI(commands.Cog):
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
                     if function_name == "search_internet":
-                        search_results = await self.search_internet(query=function_args.get("query"), images=function_args.get("images"))
+                        search_results = await search_internet(query=function_args.get("query"), images=function_args.get("images"))
                         messages.append(
                             {
                                 "tool_call_id": tool_call.id,
@@ -283,15 +293,79 @@ class ArxAI(commands.Cog):
         await message.edit(content=f"{status}")
 
 
-    async def search_internet(self, query):
-        # Implement your internet search function here
-        # This is a placeholder implementation
-        return f"Search results for: {query}"
-
     async def evaluate_response(self, query, response):
-        # Implement your response evaluation here
-        # This is a placeholder implementation that returns a random score between 0 and 1
-        return random.random()
+        # 1. Relevance Check
+        relevance_score = self.check_relevance(query, response)
+
+        # 2. Coherence Check
+        coherence_score = await self.check_coherence(response)
+
+        # 3. Completeness Check
+        completeness_score = await self.check_completeness(query, response)
+
+        # 4. Calculate final score
+        final_score = (relevance_score + coherence_score + completeness_score) / 3
+
+        return final_score
+
+    def check_relevance(self, query, response):
+        # Use TF-IDF and cosine similarity to measure relevance
+        tfidf_matrix = self.vectorizer.fit_transform([query, response])
+        cosine_sim = cosine_similarity(tfidf_matrix[0:1], tfidf_matrix[1:2])
+        return cosine_sim[0][0]
+
+    async def check_coherence(self, response):
+        # Use Groq to evaluate coherence
+        prompt = f"""
+        Evaluate the coherence of the following text on a scale of 0 to 1, 
+        where 0 is completely incoherent and 1 is perfectly coherent.
+        Consider factors such as logical flow, consistency, and clarity.
+
+        Text to evaluate: "{response}"
+
+        Provide your evaluation as a single float between 0 and 1.
+        """
+
+        result = await self.groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-groq-70b-8192-tool-use-preview",
+            max_tokens=10,
+            temperature=0.2
+        )
+
+        try:
+            coherence_score = float(result.choices[0].message.content.strip())
+            return max(0, min(1, coherence_score))  # Ensure the score is between 0 and 1
+        except ValueError:
+            return 0.5  # Default to middle score if parsing fails
+
+    async def check_completeness(self, query, response):
+        # Use Groq to evaluate completeness
+        prompt = f"""
+        Evaluate how completely the following response answers the given query 
+        on a scale of 0 to 1, where 0 is not at all and 1 is perfectly complete.
+
+        Query: "{query}"
+        Response: "{response}"
+
+        Consider whether all parts of the query are addressed and if the 
+        response provides sufficient detail.
+
+        Provide your evaluation as a single float between 0 and 1.
+        """
+
+        result = await self.groq_client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama3-groq-70b-8192-tool-use-preview",
+            max_tokens=10,
+            temperature=0.2
+        )
+
+        try:
+            completeness_score = float(result.choices[0].message.content.strip())
+            return max(0, min(1, completeness_score))  # Ensure the score is between 0 and 1
+        except ValueError:
+            return 0.5
 
     async def preprocess_messages(self, user_message, ai_response):
         # Check for jailbreak attempts
