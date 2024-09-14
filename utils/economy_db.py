@@ -100,8 +100,8 @@ async def get_user_inventory(ctx, user_id: int):
 async def get_shop_items():
     return await Shop.all()
 
-async def add_items_to_shop(ctx, name: str, description: str, price: int):
-    await Shop.create(name=name, description=description, price=price)
+async def add_items_to_shop(ctx, name: str, description: str, price: int, emoji: str, stackable: bool, sellable: bool):
+    await Shop.create(name=name, description=description, price=price, emoji=emoji, sellable=stackable, stackable=stackable)
     return await ctx.send(f"{name} has been added to the shop!")
 
 async def remove_items_from_shop(ctx, name: str):

@@ -47,12 +47,12 @@ class Shop(commands.Cog):
             name = parts[0].strip()
             price = int(parts[1].strip())
             description = parts[2].strip()
-            emoji = parts[3].strip()
+            emoji = parts[3].strip().replace("<", "").replace(">", "")
             sellable = parts[4].strip()
             stackable = parts[5].strip()
 
             # Call the add_items_to_shop function with separate arguments
-            await add_items_to_shop(ctx, name=name, description=description, price=price)
+            await add_items_to_shop(ctx, name=name, description=description, price=price, emoji=emoji, sellable=sellable, stackable=stackable)
         except ValueError as e:
             await ctx.send(f"Error: {str(e)}")
         except Exception as e:
