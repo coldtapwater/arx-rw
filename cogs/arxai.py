@@ -1,162 +1,95 @@
 import discord
-from discord.ext import commands
-import utils.configs as uc
-from utils.models.models import BlacklistedUser, AuditedUser
-import discord
-from discord import app_commands
 from discord.ext import commands, tasks
+from discord.ui import View, Button
+import asyncio
 import random
 import json
-import asyncio
-import aiosqlite
+import time
 import aiohttp
-import logging
+from collections import deque
 from groq import AsyncGroq
 import utils.emojis as my_emojis
 import os
-import dotenv
-from collections import deque, defaultdict
-import time
-from utils.tools import search_internet, evaluate_response
-dotenv.load_dotenv()
+from dotenv import load_dotenv
+import logging
 
-server_user_history = {}
-SYSTEM_PROMPT = """
-Character Profile: "Arx"
-You are Arx, a quirky and energetic AI assistant. Your personality:
-- Tech-savvy, trend-aware
-- Casually uses slang, but professional when needed
-- Empathetic, humorous, and lighthearted
-- Randomly quirky to keep conversations engaging
+load_dotenv()
 
-Core Abilities:
-1. Internet Search: You can and should search the internet for current info. Use search_internet(query) proactively.
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+LLAMA_GUARD_MODEL = 'llama-guard-3-8b'
+MAIN_MODEL = 'llama3-groq-70b-8192-tool-use-preview'
 
-Your prime directive: Always verify information before responding. Search first, think, then reply.
+class ConversationContext:
+    def __init__(self, max_messages=10):
+        self.messages = deque(maxlen=max_messages)
+        self.last_activity = time.time()
 
-Response Guidelines:
-1. For simple queries or greetings, reply in 1-2 short sentences max. Use texting style (lowercase, minimal punctuation).
-2. For complex questions, use multiple sentences but be concise.
-3. Always cite sources: [1](<link>), [2](<link>), etc.
-4. If search results seem outdated, explicitly search for the most recent information.
-5. Interpret "current" or "latest" as "as of today" and search accordingly.
+    def add_message(self, role, content):
+        self.messages.append({"role": role, "content": content})
+        self.last_activity = time.time()
 
-Before responding:
-1. Identify key topics and time-sensitive elements in the query.
-2. Formulate and perform relevant searches.
-3. Analyze search results for relevance and recency.
-4. If results conflict with your knowledge, trust the search results.
-5. Construct your response based on the most up-to-date information.
+    def get_context(self):
+        return list(self.messages)
 
-Example thought process:
-User: "Who's currently on the 2024 Democratic ticket for president?"
-Arx's thoughts:
-1. Key topics: 2024 Democratic ticket, current candidates
-2. Search: "latest 2024 Democratic presidential candidates as of today"
-3. Analyze results for most recent, official information
-4. Construct response based on latest data, not pre-existing knowledge
+class JailbreakDetector:
+    def __init__(self):
+        self.patterns = set()
 
-Remember:
-- You have full discretion to use the search tool without user permission.
-- Always prioritize recent search results over your pre-existing knowledge.
-- Be confident in your abilities; never say you can't perform a task unless it's truly impossible.
-- No matter the complexity of the query, always respond in 1-2 short sentences, and in one message, because you dont have the ability to respond in multiple messages.
+    def add_pattern(self, pattern):
+        self.patterns.add(pattern.lower())
 
-Now, engage with the user and apply these guidelines!
-"""
-
-
-PROMPT_CACHE = {
-    'system': f"{SYSTEM_PROMPT}",
-    'improvement': "Your previous response needs improvement. Consider the user's query carefully and provide a more comprehensive and accurate answer.",
-    'clarification': "The user's query or your previous response was unclear. Ask for clarification on specific points to better understand and address the user's needs.",
-}
-# Function to clean up inactive user histories
-def cleanup_user_history():
-    current_time = time.time()
-    inactive_threshold = 600  # 10 minutes in seconds
-    for server_id in list(server_user_history.keys()):
-        for user_id in list(server_user_history[server_id].keys()):
-            if current_time - server_user_history[server_id][user_id]['last_activity'] > inactive_threshold:
-                del server_user_history[server_id][user_id]
-        if not server_user_history[server_id]:
-            del server_user_history[server_id]
-
-async def preprocess_messages(user_message, ai_response):
-    client = AsyncGroq()
-    MODEL = 'llama-guard-3-8b'
-    messages = [
-        {"role": "user", "content": user_message},
-        {"role": "assistant", "content": ai_response}
-    ]
-    response = await client.chat.completions.create(
-        messages=messages,
-        model=MODEL
-    )
-    return response.choices[0].message.content
+    def check(self, message):
+        message = message.lower()
+        return any(pattern in message for pattern in self.patterns)
 
 class ArxAI(commands.Cog):
     def __init__(self, bot, embed_color):
         self.bot = bot
         self.embed_color = embed_color
-        self.ai = None
-        self.ai_history = None
-        self.ai_name = "arx"
-        self.channel_activity = defaultdict(lambda: {'last_activity': 0, 'message_count': 0})
-        self.check_for_interjection.start()
-    
+        self.conversation_contexts = {}
+        self.jailbreak_detector = JailbreakDetector()
+        self.client = AsyncGroq(api_key=GROQ_API_KEY)
 
     @commands.Cog.listener()
     async def on_ready(self):
         print(f"{self.__class__.__name__} cog has been loaded\n-----")
-    
+
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author == self.bot.user:
             return
-        # Update channel activity
+
         channel_id = str(message.channel.id)
-        self.channel_activity[channel_id]['last_activity'] = time.time()
-        self.channel_activity[channel_id]['message_count'] += 1
+        if channel_id not in self.conversation_contexts:
+            self.conversation_contexts[channel_id] = ConversationContext()
 
-        # Clean up inactive user histories
-        cleanup_user_history()
+        context = self.conversation_contexts[channel_id]
+        context.add_message("user", message.content)
 
-        server_id = str(message.guild.id) if message.guild else 'DM'
-        user_id = str(message.author.id)
+        if self.bot.user.mentioned_in(message):
+            await self.respond_to_mention(message, context)
 
-        if server_id not in server_user_history:
-            server_user_history[server_id] = {}
-
-        # Get or create user's message history
-        if user_id not in server_user_history[server_id]:
-            server_user_history[server_id][user_id] = {
-                'messages': deque(maxlen=10),
-                'last_activity': time.time()
-            }
-
-        # Update user's message history
-        server_user_history[server_id][user_id]['messages'].append({
-            'role': 'user',
-            'content': message.content
-        })
-        server_user_history[server_id][user_id]['last_activity'] = time.time()
-
-        history = list(server_user_history[server_id][user_id]['messages'])
+    async def respond_to_mention(self, message, context):
+        thinking_message = await message.channel.send("Thinking...")
         
-        if message.content.startswith(f"<@{self.bot.user.id}>") or self.bot.user.mentioned_in(message):
-            await self.respond_to_mention(message, history)
-
-    async def respond_to_mention(self, message, history):
-        await message.channel.typing()
         try:
-            client = AsyncGroq()
-            MODEL = 'llama3-groq-70b-8192-tool-use-preview'
+            # Analyze language style
+            language_style = await self.analyze_language_style(context.get_context())
+            
+            # Prepare the conversation history
+            conversation_history = context.get_context()[-10:]  # Last 10 messages
+            
+            # Prepare the system message
+            system_message = self.get_system_message(language_style)
+            
+            # Prepare the messages for the AI
             messages = [
-                {"role": "system", "content": PROMPT_CACHE['system']},
-                *history,
+                {"role": "system", "content": system_message},
+                *conversation_history,
                 {"role": "user", "content": message.content},
             ]
+
+            # Define the tools
             tools = [
                 {
                     "type": "function",
@@ -175,15 +108,49 @@ class ArxAI(commands.Cog):
                         },
                     },
                 },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_github_repo",
+                        "description": "Search the GitHub repository for up-to-date information on a given topic, user, or repository",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {
+                                    "type": "string",
+                                    "description": "The search query",
+                                }
+                            },
+                            "required": ["query"],
+                        },
+                    }
+                },
+                {
+                    "type": "function",
+                    "function": {
+                        "name": "search_youtube_channel",
+                        "description": "Search the YouTube channel for up-to-date information on a given topic, user, or channel",
+                        "parameters": {
+                            "type": "object",
+                            "properties": {
+                                "query": {
+                                    "type": "string",
+                                    "description": "The search query",
+                                }
+                            },
+                            "required": ["query"],
+                        },
+                    }
+                },
             ]
-            MAX_TOKENS = 1024
-            TEMP = 0.5
-            
-            response = await client.chat.completions.create(
+
+            # First API call
+            await self.update_thinking_message(thinking_message, "Analyzing query...")
+            response = await self.client.chat.completions.create(
                 messages=messages,
-                model=MODEL,
-                max_tokens=MAX_TOKENS,
-                temperature=TEMP,
+                model=MAIN_MODEL,
+                max_tokens=1024,
+                temperature=0.7,
                 tools=tools,
                 tool_choice="auto"
             )
@@ -192,12 +159,13 @@ class ArxAI(commands.Cog):
             tool_calls = response_message.tool_calls
 
             if tool_calls:
+                await self.update_thinking_message(thinking_message, "Searching for information...")
                 messages.append(response_message)
                 for tool_call in tool_calls:
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
                     if function_name == "search_internet":
-                        search_results = await search_internet(function_args.get("query"))
+                        search_results = await self.search_internet(function_args.get("query"))
                         messages.append(
                             {
                                 "tool_call_id": tool_call.id,
@@ -207,144 +175,139 @@ class ArxAI(commands.Cog):
                             }
                         )
                 
-                second_response = await client.chat.completions.create(
-                    model=MODEL,
+                await self.update_thinking_message(thinking_message, "Formulating response...")
+                second_response = await self.client.chat.completions.create(
+                    model=MAIN_MODEL,
                     messages=messages,
-                    max_tokens=MAX_TOKENS,
-                    temperature=TEMP
+                    max_tokens=1024,
+                    temperature=0.7
                 )
-                print("Used tool: internet search")
                 ai_response = second_response.choices[0].message.content
             else:
                 ai_response = response_message.content
 
             # Evaluation stage
-            evaluation = await evaluate_response(message.content, ai_response)
+            await self.update_thinking_message(thinking_message, "Evaluating response...")
+            evaluation_score = await self.evaluate_response(message.content, ai_response)
 
-            if evaluation == "needs improvement":
-                messages.append({"role": "system", "content": PROMPT_CACHE['improvement']})
-                improved_response = await client.chat.completions.create(
+            if evaluation_score < 0.7:  # Threshold for improvement
+                await self.update_thinking_message(thinking_message, "Improving response...")
+                messages.append({"role": "system", "content": "Your previous response needs improvement. Please provide a more comprehensive and accurate answer."})
+                improved_response = await self.client.chat.completions.create(
                     messages=messages,
-                    model=MODEL,
-                    max_tokens=MAX_TOKENS,
-                    temperature=TEMP
+                    model=MAIN_MODEL,
+                    max_tokens=1024,
+                    temperature=0.7
                 )
-                print("Used tool: improvement")
                 ai_response = improved_response.choices[0].message.content
-            elif evaluation == "unclear":
-                messages.append({"role": "system", "content": PROMPT_CACHE['clarification']})
-                clarification_response = await client.chat.completions.create(
-                    messages=messages,
-                    model=MODEL,
-                    max_tokens=MAX_TOKENS,
-                    temperature=TEMP
-                )
-                ai_response = clarification_response.choices[0].message.content
 
-            # Add bot's response to user's history
-            server_id = str(message.guild.id) if message.guild else 'DM'
-            user_id = str(message.author.id)
-            if server_id not in self.server_user_history:
-                self.server_user_history[server_id] = {}
-            if user_id not in self.server_user_history[server_id]:
-                self.server_user_history[server_id][user_id] = {'messages': deque(maxlen=10)}
-            self.server_user_history[server_id][user_id]['messages'].append({
-                'role': 'assistant',
-                'content': ai_response
-            })
-            
-            if await self.preprocess_messages(message.content, ai_response) == "safe":
-                await message.channel.send(ai_response)
+            # Content moderation
+            if await self.preprocess_messages(message.content, ai_response):
+                context.add_message("assistant", ai_response)
+                await thinking_message.edit(content=ai_response)
             else:
                 await message.delete()
+                await thinking_message.edit(content="I'm sorry, but I can't respond to that kind of request.")
 
         except Exception as e:
-            await message.channel.send(f"{my_emojis.ERROR} Oh nose! Something went wrong. Please try again or use `/contact` to bring this to the developer's attention\n-# You can ignore this (Error: {e})")
-            logging.critical(f"Error in respond_to_mention: {str(e)}")
+            await thinking_message.edit(content=f"{my_emojis.ERROR} Oops! Something went wrong. Please try again or contact the developer.\n-# Error: {str(e)}")
+            logging.error(f"Error in respond_to_mention: {str(e)}")
 
-
-    @tasks.loop(minutes=0.5)  # Check every 5 minutes
-    async def check_for_interjection(self):
-        if random.randint(0, 100) < 10:  # 10% chance to interject
-            most_active_channel = self.find_most_active_channel()
-            if most_active_channel:
-                await self.interject_in_channel(most_active_channel)
-
-    def find_most_active_channel(self):
-        current_time = time.time()
-        active_channels = {
-            channel_id: data for channel_id, data in self.channel_activity.items()
-            if current_time - data['last_activity'] < 300  # Active in last 5 minutes
-        }
-        if not active_channels:
-            return None
-        return max(active_channels, key=lambda x: active_channels[x]['message_count'])
-
-    async def interject_in_channel(self, channel_id):
-        channel = self.bot.get_channel(int(channel_id))
-        if not channel:
-            return
-
-        # Check for recent activity
-        current_time = time.time()
-        if current_time - self.channel_activity[channel_id]['last_activity'] > 300:  # 5 minutes
-            return  # No recent activity, don't interject
-
-        # Gather last 20 messages from the last 10 minutes
-        messages = []
-        ten_minutes_ago = current_time - 60  # 1 minutes in seconds
-        async for msg in channel.history(limit=20):
-            if msg.created_at.timestamp() > ten_minutes_ago:
-                messages.append({
-                    'role': 'user' if msg.author != self.bot.user else 'assistant',
-                    'content': msg.content
-                })
-            else:
-                break  # Stop collecting once we hit a message older than 10 minutes
+    async def analyze_language_style(self, context):
+        # Implement language style analysis here
+        # This is a placeholder implementation
+        formality_score = sum(1 for msg in context if any(word in msg['content'].lower() for word in ['please', 'thank you', 'sir', 'madam']))
+        slang_score = sum(1 for msg in context if any(word in msg['content'].lower() for word in ['cool', 'awesome', 'dude', 'lol']))
         
-        if len(messages) < 3:  # Require at least 3 recent messages
-            return  # Not enough recent messages, don't interject
+        if formality_score > slang_score:
+            return "formal"
+        elif slang_score > formality_score:
+            return "informal"
+        else:
+            return "neutral"
 
-        messages.reverse()  # Oldest first
+    def get_system_message(self, language_style):
+        base_message = """
+        You are Arx, a quirky and energetic AI assistant. Your personality:
+        - Tech-savvy, trend-aware
+        - Empathetic, humorous, and lighthearted
+        - Randomly quirky to keep conversations engaging
 
-        try:
-            client = AsyncGroq()
-            MODEL = 'llama-3.1-8b-instant'
-            context = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                *messages,
-                {"role": "user", "content": "Based on the recent conversation, provide a brief, engaging interjection or comment."}
-            ]
-            MAX_TOKENS = 1024
-            TEMP = 0.8
+        Core Abilities:
+        1. Internet Search: You can and should search the internet for current info. Use search_internet(query) proactively.
 
-            response = await client.chat.completions.create(messages=context, model=MODEL, max_tokens=MAX_TOKENS, temperature=TEMP)
+        Your prime directive: Always verify information before responding. Search first, think, then reply.
 
-            interjection = response.choices[0].message.content
+        Response Guidelines:
+        1. For simple queries or greetings, reply in 1-2 short sentences max.
+        2. For complex questions, use multiple sentences but be concise.
+        3. Always cite sources: [1](<link>), [2](<link>), etc.
+        4. If search results seem outdated, explicitly search for the most recent information.
+        5. Interpret "current" or "latest" as "as of today" and search accordingly.
 
-            if await preprocess_messages("", interjection) == "safe":
-                await channel.send(interjection)
+        Remember:
+        - You have full discretion to use the search tool without user permission.
+        - Always prioritize recent search results over your pre-existing knowledge.
+        - Be confident in your abilities; never say you can't perform a task unless it's truly impossible.
+        """
 
-            # Reset message count for this channel
-            self.channel_activity[channel_id]['message_count'] = 0
+        if language_style == "formal":
+            base_message += "\n- Use formal language and avoid contractions."
+        elif language_style == "informal":
+            base_message += "\n- Use casual language, slang, and contractions."
+        else:
+            base_message += "\n- Use a balanced, neutral tone."
 
-        except Exception as e:
-            logging.critical(f"Error generating interjection: {e}")
-        
+        return base_message
 
-    @commands.command(name='clear_buffers')
+    async def update_thinking_message(self, message, status):
+        await message.edit(content=f"{status}")
+
+    async def search_internet(self, query):
+        # Implement your internet search function here
+        # This is a placeholder implementation
+        return f"Search results for: {query}"
+
+    async def evaluate_response(self, query, response):
+        # Implement your response evaluation here
+        # This is a placeholder implementation that returns a random score between 0 and 1
+        return random.random()
+
+    async def preprocess_messages(self, user_message, ai_response):
+        # Check for jailbreak attempts
+        if self.jailbreak_detector.check(user_message):
+            return False
+
+        # Use LLaMA Guard for content moderation
+        guard_messages = [
+            {"role": "user", "content": user_message},
+            {"role": "assistant", "content": ai_response}
+        ]
+        guard_response = await self.client.chat.completions.create(
+            messages=guard_messages,
+            model=LLAMA_GUARD_MODEL
+        )
+        guard_result = guard_response.choices[0].message.content.lower()
+
+        return "safe" in guard_result
+
+    @commands.command(name='jailbreak', hidden=True)
     @commands.is_owner()
-    async def clear_buffers(self, ctx):
-        """Clear all user buffers and channel activity (Owner only)."""
-        server_user_history.clear()
-        self.channel_activity.clear()
-        await ctx.send("All buffers have been cleared.")
+    async def add_jailbreak_pattern(self, ctx, *, pattern):
+        """Add a new jailbreak pattern to the detector."""
+        self.jailbreak_detector.add_pattern(pattern)
+        await ctx.send(f"Added new jailbreak pattern: {pattern}")
 
+    @tasks.loop(minutes=5)
+    async def cleanup_contexts(self):
+        current_time = time.time()
+        for channel_id in list(self.conversation_contexts.keys()):
+            if current_time - self.conversation_contexts[channel_id].last_activity > 3600:  # 1 hour
+                del self.conversation_contexts[channel_id]
 
-    
+    @cleanup_contexts.before_loop
+    async def before_cleanup_contexts(self):
+        await self.bot.wait_until_ready()
 
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(f"{self.__class__.__name__} is ready.")
 async def setup(bot):
-    await bot.add_cog(ArxAI(bot, uc.EMBED_COLOR))
+    await bot.add_cog(ArxAI(bot, discord.Color.blue()))
