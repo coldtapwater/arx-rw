@@ -42,7 +42,7 @@ class Shop(commands.Cog):
             name = parts[0].strip()
             price = int(parts[1].strip())
             description = parts[2].strip()
-            emoji = parts[3].strip().replace("<", "").replace(">", "")
+            emoji = parts[3].strip()
             sellable = parts[4].strip()
             stackable = parts[5].strip()
 
