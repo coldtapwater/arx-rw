@@ -101,7 +101,7 @@ class ArxAI(commands.Cog):
                     "type": "function",
                     "function": {
                         "name": "search_internet",
-                        "description": "Search the internet for up-to-date information on a given topic",
+                        "description": "Search the internet for up-to-date information on a given topic; also accepts image searches",
                         "parameters": {
                             "type": "object",
                             "properties": {
