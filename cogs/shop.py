@@ -41,7 +41,7 @@ class Shop(commands.Cog):
         try:
             # Split the input into name, description, and price
             parts = item_info.split('|')
-            if len(parts) != 3:
+            if len(parts) != 6:
                 raise ValueError("Invalid format. Please use: name | description | price")
 
             name = parts[0].strip()
