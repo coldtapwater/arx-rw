@@ -119,4 +119,10 @@ class LevelReward(Model):
 
     class Meta:
         unique_together = ("guild_id", "level")
+
+class JailbreakPatterns(Model):
+    pattern = fields.TextField()
+
+    class Meta:
+        table = "jailbreak_patterns"
     

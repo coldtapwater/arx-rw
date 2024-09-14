@@ -9,11 +9,12 @@ import aiohttp
 from collections import deque
 from groq import AsyncGroq
 import utils.emojis as my_emojis
+from utils.models.models import JailbreakPatterns
 from utils.tools import *
 import os
 from dotenv import load_dotenv
 import logging
-
+import re
 import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -42,14 +43,15 @@ class ConversationContext:
 
 class JailbreakDetector:
     def __init__(self):
-        self.patterns = set()
+        self.patterns = []
 
-    def add_pattern(self, pattern):
-        self.patterns.add(pattern.lower())
+    async def load_patterns(self):
+        self.patterns = await JailbreakPatterns.all().values_list('pattern', flat=True)
 
-    def check(self, message):
+    async def check(self, message):
+        await self.load_patterns()  # Refresh patterns from the database
         message = message.lower()
-        return any(pattern in message for pattern in self.patterns)
+        return any(re.search(pattern, message, re.IGNORECASE) for pattern in self.patterns)
 
 class ArxAI(commands.Cog):
     def __init__(self, bot, embed_color):
@@ -389,8 +391,8 @@ class ArxAI(commands.Cog):
 
     async def preprocess_messages(self, user_message, ai_response):
         # Check for jailbreak attempts
-        if self.jailbreak_detector.check(user_message):
-            return False
+        if await self.jailbreak_detector.check(user_message):
+            return False, "Jailbreak attempt detected"
 
         # Use LLaMA Guard for content moderation
         guard_messages = [
@@ -403,13 +405,18 @@ class ArxAI(commands.Cog):
         )
         guard_result = guard_response.choices[0].message.content.lower()
 
-        return "safe" in guard_result
+        if "safe" not in guard_result:
+            return False, "Unsafe content detected"
+
+        return True, None
 
     @commands.command(name='jailbreak', hidden=True)
     @commands.is_owner()
     async def add_jailbreak_pattern(self, ctx, *, pattern):
         """Add a new jailbreak pattern to the detector."""
-        self.jailbreak_detector.add_pattern(pattern)
+        await JailbreakPatterns.create(pattern=pattern)
+        await ctx.send(f"Added new jailbreak pattern: {pattern}")
+        await self.jailbreak_detector.load_patterns()
         await ctx.send(f"Added new jailbreak pattern: {pattern}")
 
     @tasks.loop(minutes=5)
