@@ -36,9 +36,24 @@ class Shop(commands.Cog):
     
     @shop.command(name="add_item")
     @commands.is_owner()
-    async def add_item(self, ctx,*, name: str, description: str, price: int):
+    async def add_item(self, ctx, *, item_info: str):
         """Add an item to the shop (Owner Only)"""
-        await add_items_to_shop(ctx, name, description, price)
+        try:
+            # Split the input into name, description, and price
+            parts = item_info.split('|')
+            if len(parts) != 3:
+                raise ValueError("Invalid format. Please use: name | description | price")
+
+            name = parts[0].strip()
+            description = parts[1].strip()
+            price = int(parts[2].strip())
+
+            # Call the add_items_to_shop function with separate arguments
+            await add_items_to_shop(ctx, name=name, description=description, price=price)
+        except ValueError as e:
+            await ctx.send(f"Error: {str(e)}")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {str(e)}")
 
     @shop.command(name="remove_item")
     @commands.is_owner()
