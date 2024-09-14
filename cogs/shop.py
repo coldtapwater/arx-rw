@@ -24,15 +24,10 @@ class Shop(commands.Cog):
     async def view(self, ctx):
         """View the shop"""
         await get_shop_items()
-        shop_embed = discord.Embed(
-            title="Shop",
-            color=discord.Color.from_str(self.embed_color)
-        )
+        message = "***Shop***\n\n\t"
         for item in await get_shop_items():
-            shop_embed.add_field(name=item.name, value=item.description)
-        await ctx.send(
-            embed=shop_embed
-        )
+            message+=f"\t{item.emoji + item.name}\n\t({item.description} | Price: {item.price}{uc.CURRENCY})\n\t"
+        await ctx.send(message)
     
     @shop.command(name="add_item")
     @commands.is_owner()
