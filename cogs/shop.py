@@ -24,9 +24,9 @@ class Shop(commands.Cog):
     async def view(self, ctx):
         """View the shop"""
         await get_shop_items()
-        message = "***Shop***\n\n\t"
+        message = "***Shop***\n\n"
         for item in await get_shop_items():
-            message+=f"\t{item.emoji + item.name}\n\t({item.description} | Price: {item.price}{uc.CURRENCY})\n\t"
+            message+=f"\t[+]{item.emoji} - {item.name}\n\t*{item.description}* -Price: {item.price} {uc.CURRENCY}\n\t"
         await ctx.send(message)
     
     @shop.command(name="add_item")
