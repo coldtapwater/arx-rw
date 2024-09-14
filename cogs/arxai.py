@@ -200,6 +200,26 @@ class ArxAI(commands.Cog):
                                 "content": search_results,
                             }
                         )
+                    if function_name == "search_github_repo":
+                        search_results = await search_github_repo(query=function_args.get("query"))
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": function_name,
+                                "content": search_results,
+                            }
+                        )
+                    if function_name == "search_youtube_channel":
+                        search_results = await search_youtube_channel(query=function_args.get("query"))
+                        messages.append(
+                            {
+                                "tool_call_id": tool_call.id,
+                                "role": "tool",
+                                "name": function_name,
+                                "content": search_results,
+                            }
+                        )
                 
                 await self.update_thinking_message(thinking_message, "Formulating response...")
                 await asyncio.sleep(1)
