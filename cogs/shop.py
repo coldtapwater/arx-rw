@@ -36,9 +36,9 @@ class Shop(commands.Cog):
     
     @shop.command(name="add_item")
     @commands.is_owner()
-    async def add_item(self, ctx, name: str, description: str, price: int):
+    async def add_item(self, ctx,*, name: str, description: str, price: int):
         """Add an item to the shop (Owner Only)"""
-        await add_items_to_shop(ctx, name, description, 0)
+        await add_items_to_shop(ctx, name, description, price)
 
     @shop.command(name="remove_item")
     @commands.is_owner()
