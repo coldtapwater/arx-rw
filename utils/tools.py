@@ -6,6 +6,9 @@ from googleapiclient.discovery import build
 import asyncio
 import os
 from functools import lru_cache
+from functools import wraps
+from typing import Any, Dict, Callable
+from utils.emojis import *
 
 # Load environment variables
 OMDB_API_KEY = os.getenv("OMDB_API_KEY")
@@ -16,11 +19,34 @@ GITHUB_ACCESS_TOKEN = os.getenv("GITHUB_ACCESS_TOKEN")
 github_client = Github(GITHUB_ACCESS_TOKEN)
 youtube_client = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
+def async_lru_cache(maxsize: int = 128, ttl: int = 3600):
+    cache: Dict[Any, Any] = {}
+    
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            key = str(args) + str(kwargs)
+            if key in cache:
+                result, timestamp = cache[key]
+                if asyncio.get_event_loop().time() - timestamp < ttl:
+                    return result
+            
+            result = await func(*args, **kwargs)
+            cache[key] = (result, asyncio.get_event_loop().time())
+            
+            if len(cache) > maxsize:
+                oldest_key = min(cache, key=lambda k: cache[k][1])
+                del cache[oldest_key]
+            
+            return result
+        return wrapper
+    return decorator
+
 def truncate_string(string, max_chars=2000):
     """Truncate a string to a maximum number of characters."""
     return string[:max_chars] if len(string) > max_chars else string
 
-@lru_cache(maxsize=100)
+@async_lru_cache(maxsize=100)
 async def search_internet(query: str, images: bool = False):
     """
     Perform an internet search using DuckDuckGo and return the top results.
@@ -33,7 +59,7 @@ async def search_internet(query: str, images: bool = False):
     
     return truncate_string(json.dumps({"results": results}))
 
-@lru_cache(maxsize=100)
+@async_lru_cache(maxsize=100)
 async def search_github_repo(query: str):
     """
     Search for a GitHub repository and return relevant information.
@@ -56,7 +82,7 @@ async def search_github_repo(query: str):
     
     return truncate_string(json.dumps({"results": results}))
 
-@lru_cache(maxsize=100)
+@async_lru_cache(maxsize=100)
 async def search_youtube_channel(query: str):
     """
     Search for a YouTube channel and return relevant information.
