@@ -181,7 +181,7 @@ class ArxAI(commands.Cog):
                     function_name = tool_call.function.name
                     function_args = json.loads(tool_call.function.arguments)
                     if function_name == "search_internet":
-                        search_results = await self.search_internet(function_args.get("query"), function_args.get("images"))
+                        search_results = await self.search_internet(self, function_args.get("query"), function_args.get("images"))
                         messages.append(
                             {
                                 "tool_call_id": tool_call.id,
