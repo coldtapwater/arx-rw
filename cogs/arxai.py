@@ -173,7 +173,7 @@ class ArxAI(commands.Cog):
                 max_tokens=1024,
                 temperature=0.7,
                 tools=tools,
-                tool_choice="auto"
+                tool_choice="required"
             )
 
             response_message = response.choices[0].message
