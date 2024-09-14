@@ -70,7 +70,7 @@ class ArxAI(commands.Cog):
             await self.respond_to_mention(message, context)
 
     async def respond_to_mention(self, message, context):
-        thinking_message = await message.channel.send("Thinking..")
+        thinking_message = await message.channel.send("Thinking.")
         await asyncio.sleep(0.5)
         await self.update_thinking_message(thinking_message, "Thinking..")
         await asyncio.sleep(0.5)
