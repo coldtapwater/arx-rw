@@ -418,6 +418,23 @@ class ArxAI(commands.Cog):
         await ctx.send(f"Added new jailbreak pattern: {pattern}")
         await self.jailbreak_detector.load_patterns()
         await ctx.send(f"Added new jailbreak pattern: {pattern}")
+    
+    @commands.command(name='clear')
+    async def clear_history(self, ctx, channel: discord.TextChannel = None):
+        """
+        Clear the conversation history/context for a specific channel or all channels.
+        Usage: r clear_history [channel]
+        If no channel is specified, clears history for all channels.
+        """
+        if channel:
+            if str(channel.id) in self.conversation_contexts:
+                del self.conversation_contexts[str(channel.id)]
+                await ctx.send(f"Conversation history for {channel.mention} has been cleared.")
+            else:
+                await ctx.send(f"No conversation history found for {channel.mention}.")
+        else:
+            self.conversation_contexts.clear()
+            await ctx.send("Conversation history for all channels has been cleared.")
 
     @tasks.loop(minutes=5)
     async def cleanup_contexts(self):
