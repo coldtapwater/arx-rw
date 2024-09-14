@@ -326,7 +326,7 @@ class ArxAI(commands.Cog):
         Provide your evaluation as a single float between 0 and 1.
         """
 
-        result = await self.groq_client.chat.completions.create(
+        result = await self.client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama3-groq-70b-8192-tool-use-preview",
             max_tokens=10,
@@ -354,7 +354,7 @@ class ArxAI(commands.Cog):
         Provide your evaluation as a single float between 0 and 1.
         """
 
-        result = await self.groq_client.chat.completions.create(
+        result = await self.client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama3-groq-70b-8192-tool-use-preview",
             max_tokens=10,
