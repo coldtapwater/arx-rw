@@ -70,7 +70,13 @@ class ArxAI(commands.Cog):
             await self.respond_to_mention(message, context)
 
     async def respond_to_mention(self, message, context):
-        thinking_message = await message.channel.send("Thinking...")
+        thinking_message = await message.channel.send("Thinking..")
+        await asyncio.sleep(0.5)
+        await self.update_thinking_message(thinking_message, "Thinking..")
+        await asyncio.sleep(0.5)
+        await self.update_thinking_message(thinking_message, "Thinking...")
+
+        await asyncio.sleep(1)
         
         try:
             # Analyze language style
@@ -161,11 +167,11 @@ class ArxAI(commands.Cog):
 
             if tool_calls:
                 await self.update_thinking_message(thinking_message, "Searching for information.")
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.5)
                 await self.update_thinking_message(thinking_message, "Searching for information..")
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.5)
                 await self.update_thinking_message(thinking_message, "Searching for information...")
-                await asyncio.sleep(1)
+                await asyncio.sleep(0.5)
                 messages.append(response_message)
                 for tool_call in tool_calls:
                     function_name = tool_call.function.name
