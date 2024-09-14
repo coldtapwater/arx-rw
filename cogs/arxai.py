@@ -146,6 +146,7 @@ class ArxAI(commands.Cog):
 
             # First API call
             await self.update_thinking_message(thinking_message, "Analyzing query...")
+            await asyncio.sleep(1)
             response = await self.client.chat.completions.create(
                 messages=messages,
                 model=MAIN_MODEL,
@@ -159,7 +160,12 @@ class ArxAI(commands.Cog):
             tool_calls = response_message.tool_calls
 
             if tool_calls:
+                await self.update_thinking_message(thinking_message, "Searching for information.")
+                await asyncio.sleep(1)
+                await self.update_thinking_message(thinking_message, "Searching for information..")
+                await asyncio.sleep(1)
                 await self.update_thinking_message(thinking_message, "Searching for information...")
+                await asyncio.sleep(1)
                 messages.append(response_message)
                 for tool_call in tool_calls:
                     function_name = tool_call.function.name
@@ -176,6 +182,7 @@ class ArxAI(commands.Cog):
                         )
                 
                 await self.update_thinking_message(thinking_message, "Formulating response...")
+                await asyncio.sleep(1)
                 second_response = await self.client.chat.completions.create(
                     model=MAIN_MODEL,
                     messages=messages,
@@ -188,10 +195,12 @@ class ArxAI(commands.Cog):
 
             # Evaluation stage
             await self.update_thinking_message(thinking_message, "Evaluating response...")
+            await asyncio.sleep(1)
             evaluation_score = await self.evaluate_response(message.content, ai_response)
 
             if evaluation_score < 0.7:  # Threshold for improvement
                 await self.update_thinking_message(thinking_message, "Improving response...")
+                await asyncio.sleep(1)
                 messages.append({"role": "system", "content": "Your previous response needs improvement. Please provide a more comprehensive and accurate answer."})
                 improved_response = await self.client.chat.completions.create(
                     messages=messages,
@@ -262,6 +271,7 @@ class ArxAI(commands.Cog):
 
     async def update_thinking_message(self, message, status):
         await message.edit(content=f"{status}")
+
 
     async def search_internet(self, query):
         # Implement your internet search function here
