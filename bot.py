@@ -25,7 +25,7 @@ DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '5432')
 
 OWNER_ID = os.getenv('OWNER_ID')
-version = '2.0.0'
+version = '2.0.3'
 
 # Set up logging
 def setup_logging():
@@ -130,7 +130,8 @@ async def info(ctx):
         f"owner: j_coldtapwater",
         f"guilds: {len(bot.guilds)}",
         f"users: {len(set(bot.get_all_members()))}",
-        f"discord.py version: {discord.__version__}"
+        f"discord.py version: {discord.__version__}",
+        f"powered by iLBEngine"
     ]
 
     # Create a new image
