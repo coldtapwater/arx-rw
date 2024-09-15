@@ -175,7 +175,7 @@ Respond with either 'casual' or 'deep'.
             else:
                 model = self.GENERAL_MODEL
                 messages = [
-                    {"role": "system", "content": ""},
+                    {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": query}
                 ]
 
