@@ -9,6 +9,7 @@ from utils.models.models import JailbreakPatterns
 import json
 import re
 from typing import List, Dict, Any
+from urllib.parse import unquote
 
 SYSTEM_PROMPT="""
 You are a friendly, casual AI assistant. You're here for fun conversation, jokes, and simple questions. Keep responses concise and entertaining. Use simple \"text-like\" syntax with gen z slang used to convey the intent of the conversation. Be funny, humorous, and open-minded.
@@ -175,6 +176,8 @@ Respond with either 'casual' or 'deep'.
                 image_recognition_tool = next((tool for tool in self.tools if isinstance(tool, ImageRecognitionTool)), None)
                 if image_recognition_tool:
                     image_description = await image_recognition_tool.execute(image_url)
+                    # Decode the URL-encoded image description
+                    image_description = unquote(image_description)
                     query += f"\n\nImage description: {image_description}"
 
             if use_deep_mode:
