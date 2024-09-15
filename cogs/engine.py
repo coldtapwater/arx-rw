@@ -182,7 +182,7 @@ Respond with either 'casual' or 'deep'.
 
             if use_deep_mode:
                 model = self.DEEP_MODEL
-                await self.update_thinking_message(thinking_message, "Gathering nformation...")
+                await self.update_thinking_message(thinking_message, "Gathering information...")
                 dynamic_prompt = await self.dynamic_prompting(query, context)
                 tool_results = await self.execute_tools(query)
                 messages = [
