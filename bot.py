@@ -86,7 +86,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 
-bot = commands.Bot(command_prefix='t$', intents=intents, owner_id=OWNER_ID)
+bot = commands.Bot(command_prefix=['r ', 'R ', 'r!', 'R!', '- ' ], intents=intents, owner_id=OWNER_ID)
 
 @bot.event
 async def on_ready():
