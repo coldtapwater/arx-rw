@@ -4,7 +4,7 @@ import os
 import aiohttp
 import asyncio
 import logging
-from utils.tools2 import get_all_tools, ImageRecognitionTool
+from utils.tools import get_all_tools, ImageRecognitionTool
 from utils.models.models import JailbreakPatterns
 import json
 import re

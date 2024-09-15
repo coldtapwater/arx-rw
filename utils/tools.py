@@ -1,160 +1,190 @@
 import aiohttp
-import json
-from duckduckgo_search import AsyncDDGS
-from github import Github
-from googleapiclient.discovery import build
 import asyncio
+import base64
+import re
+from PIL import Image
+import io
 import os
-from functools import lru_cache
-from functools import wraps
-from typing import Any, Dict, Callable
-from utils.emojis import *
+from github import Github
+from datetime import datetime, timedelta
+import matplotlib.pyplot as plt
+import sympy
+from sympy.parsing.latex import parse_latex
 
-# Load environment variables
-OMDB_API_KEY = os.getenv("OMDB_API_KEY")
-YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
-GITHUB_ACCESS_TOKEN = os.getenv("GITHUB_ACCESS_TOKEN")
+class Tool:
+    def __init__(self, name):
+        self.name = name
 
-# Initialize clients
-github_client = Github(GITHUB_ACCESS_TOKEN)
-youtube_client = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
+    async def execute(self, query):
+        raise NotImplementedError
 
-def async_lru_cache(maxsize: int = 128, ttl: int = 3600):
-    cache: Dict[Any, Any] = {}
-    
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            key = str(args) + str(kwargs)
-            if key in cache:
-                result, timestamp = cache[key]
-                if asyncio.get_event_loop().time() - timestamp < ttl:
-                    return result
+    def relevance(self, query):
+        raise NotImplementedError
+
+class WebSearchTool(Tool):
+    def __init__(self):
+        super().__init__("Web Search")
+        self.api_key = os.getenv('GOOGLE_API_KEY')
+        self.search_engine_id = os.getenv('GOOGLE_CSE_ID')
+
+    async def execute(self, query):
+        async with aiohttp.ClientSession() as session:
+            params = {
+                'q': query,
+                'key': self.api_key,
+                'cx': self.search_engine_id,
+                'num': 5  # Limit to 5 results
+            }
+            url = 'https://www.googleapis.com/customsearch/v1'
+            async with session.get(url, params=params) as response:
+                data = await response.json()
+                results = []
+                for item in data.get('items', []):
+                    results.append(f"Title: {item['title']}\nSnippet: {item['snippet']}\nLink: {item['link']}")
+                return results
+
+    def relevance(self, query):
+        return 0.8 if any(keyword in query.lower() for keyword in ['search', 'find', 'look up']) else 0.5
+
+class GitHubSearchTool(Tool):
+    def __init__(self):
+        super().__init__("GitHub Search")
+        self.github = Github(os.getenv('GITHUB_TOKEN'))
+
+    async def execute(self, query):
+        loop = asyncio.get_event_loop()
+        repos = await loop.run_in_executor(None, self.github.search_repositories, query, 'stars', 'desc')
+        results = []
+        for repo in repos[:5]:
+            results.append(f"{repo.full_name}: {repo.description}")
+        return results
+
+    def relevance(self, query):
+        return 0.9 if any(keyword in query.lower() for keyword in ['github', 'repository', 'code']) else 0.3
+
+class ImageRecognitionTool(Tool):
+    def __init__(self):
+        super().__init__("Image Recognition")
+        self.api_key = os.getenv('GROQ_API_KEY')
+        self.model = "llava-v1.5-7b-4096-preview"
+
+    async def execute(self, image_url: str) -> str:
+        async with aiohttp.ClientSession() as session:
+            # Download the image
+            async with session.get(image_url) as response:
+                image_data = await response.read()
             
-            result = await func(*args, **kwargs)
-            cache[key] = (result, asyncio.get_event_loop().time())
+            # Encode the image
+            encoded_image = base64.b64encode(image_data).decode('utf-8')
             
-            if len(cache) > maxsize:
-                oldest_key = min(cache, key=lambda k: cache[k][1])
-                del cache[oldest_key]
+            # Prepare the API request
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": self.model,
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoded_image}"
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": "Describe this image in detail. Include information about what you see, the setting, any activities or objects, and the overall mood or atmosphere of the image."
+                            }
+                        ]
+                    }
+                ],
+                "max_tokens": 300
+            }
             
-            return result
-        return wrapper
-    return decorator
+            # Make the API call
+            async with session.post(url, headers=headers, json=payload) as response:
+                result = await response.json()
+                
+                if 'choices' in result and len(result['choices']) > 0:
+                    return result['choices'][0]['message']['content']
+                else:
+                    return "Sorry, I couldn't analyze the image."
 
-def truncate_string(string, max_chars=2000):
-    """Truncate a string to a maximum number of characters."""
-    return string[:max_chars] if len(string) > max_chars else string
+    def relevance(self, query):
+        image_keywords = ['image', 'picture', 'photo', 'img', 'pic', 'photograph']
+        return 0.9 if any(keyword in query.lower() for keyword in image_keywords) else 0.2
 
-@async_lru_cache(maxsize=100)
-async def search_internet(query: str, images: bool = False):
-    """
-    Perform an internet search using DuckDuckGo and return the top results.
-    """
-    async with AsyncDDGS() as ddgs:
-        if images:
-            results = [r for r in ddgs.images(query, max_results=5)]
-        else:
-            results = [r for r in ddgs.text(query, max_results=5)]
-    
-    return truncate_string(json.dumps({"results": results}))
+class LaTeXRenderingTool(Tool):
+    def __init__(self):
+        super().__init__("LaTeX Rendering")
 
-@async_lru_cache(maxsize=100)
-async def search_github_repo(query: str):
-    """
-    Search for a GitHub repository and return relevant information.
-    """
-    repos = github_client.search_repositories(query)
-    results = []
-    for repo in repos[:5]:
+    async def execute(self, latex_code):
         try:
-            readme = repo.get_readme().decoded_content.decode()
-            summary = readme[:500] + "..." if len(readme) > 500 else readme
-        except:
-            summary = "No README found"
-        
-        results.append({
-            "name": repo.name,
-            "owner": repo.owner.login,
-            "url": repo.html_url,
-            "readme_summary": summary
-        })
-    
-    return truncate_string(json.dumps({"results": results}))
+            expr = parse_latex(latex_code)
+            plt.figure(figsize=(10, 2))
+            plt.text(0.5, 0.5, f'${latex_code}$', size=20, ha='center', va='center')
+            plt.axis('off')
+            
+            img_buffer = io.BytesIO()
+            plt.savefig(img_buffer, format='png', bbox_inches='tight', pad_inches=0.1)
+            img_buffer.seek(0)
+            
+            img = Image.open(img_buffer)
+            output_buffer = io.BytesIO()
+            img.save(output_buffer, format='PNG')
+            output_buffer.seek(0)
+            
+            return output_buffer
+        except Exception as e:
+            return f"Error rendering LaTeX: {str(e)}"
 
-@async_lru_cache(maxsize=100)
-async def search_youtube_channel(query: str):
-    """
-    Search for a YouTube channel and return relevant information.
-    """
-    search_response = youtube_client.search().list(
-        q=query,
-        type='channel',
-        part='id,snippet',
-        maxResults=5
-    ).execute()
+    def relevance(self, query):
+        return 0.9 if '\\' in query or '$' in query else 0.1
 
-    results = []
-    for item in search_response.get('items', []):
-        channel_id = item['id']['channelId']
-        channel_response = youtube_client.channels().list(
-            part='snippet,statistics,topicDetails',
-            id=channel_id
-        ).execute()
+class PythonEvaluationTool(Tool):
+    def __init__(self):
+        super().__init__("Python Evaluation")
 
-        channel_info = channel_response['items'][0]
-        results.append({
-            "name": channel_info['snippet']['title'],
-            "url": f"https://www.youtube.com/channel/{channel_id}",
-            "topics": channel_info.get('topicDetails', {}).get('topicCategories', [])
-        })
-    
-    return truncate_string(json.dumps({"results": results}))
+    async def execute(self, code):
+        try:
+            # Set up a secure environment
+            allowed_modules = {'math', 'random', 'datetime'}
+            restricted_builtins = {
+                '__import__': lambda name, *args: __import__(name, *args) if name in allowed_modules else None
+            }
+            
+            # Add safe builtins
+            for name in __builtins__:
+                if name not in ['eval', 'exec', 'compile', 'open', '__import__']:
+                    restricted_builtins[name] = getattr(__builtins__, name)
+            
+            # Set up globals for execution
+            safe_globals = {'__builtins__': restricted_builtins}
+            
+            # Execute the code
+            exec(code, safe_globals)
+            
+            # Capture the output
+            output = safe_globals.get('_output_', 'No output')
+            
+            return output
+        except Exception as e:
+            return f"Error executing Python code: {str(e)}"
 
-@lru_cache(maxsize=100)
-async def search_movie(title: str):
-    """
-    Search for a movie using OMDB API, falling back to internet search if not found.
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"http://www.omdbapi.com/?t={title}&apikey={OMDB_API_KEY}") as response:
-            if response.status == 200:
-                data = await response.json()
-                if data.get("Response") == "True":
-                    return truncate_string(json.dumps(data))
-    
-    # If movie not found, fall back to internet search
-    return await search_internet(f"movie {title}")
+    def relevance(self, query):
+        return 0.9 if any(keyword in query.lower() for keyword in ['python', 'code', 'script']) else 0.3
 
-async def search_anime(query: str):
-    """
-    Search for an anime using the Jikan API.
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.jikan.moe/v4/anime?q={query}") as response:
-            if response.status == 200:
-                data = await response.json()
-                return truncate_string(json.dumps(data['data'][:5]))
-    return await search_internet(f"anime {query}")
+# Add more tool classes as needed
 
-async def search_manga(query: str):
-    """
-    Search for a manga using the Jikan API.
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://api.jikan.moe/v4/manga?q={query}") as response:
-            if response.status == 200:
-                data = await response.json()
-                return truncate_string(json.dumps(data['data'][:5]))
-    return await search_internet(f"manga {query}")
-
-async def search_book(query: str):
-    """
-    Search for a book using the Google Books API.
-    """
-    async with aiohttp.ClientSession() as session:
-        async with session.get(f"https://www.googleapis.com/books/v1/volumes?q={query}") as response:
-            if response.status == 200:
-                data = await response.json()
-                return truncate_string(json.dumps(data['items'][:5]))
-    return await search_internet(f"book {query}")
+def get_all_tools():
+    return [
+        WebSearchTool(),
+        GitHubSearchTool(),
+        ImageRecognitionTool(),
+        LaTeXRenderingTool(),
+        PythonEvaluationTool()
+    ]
