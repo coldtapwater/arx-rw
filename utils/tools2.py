@@ -65,31 +65,58 @@ class GitHubSearchTool(Tool):
 class ImageRecognitionTool(Tool):
     def __init__(self):
         super().__init__("Image Recognition")
-        self.api_key = os.getenv('VISION_API_KEY')
+        self.api_key = os.getenv('GROQ_API_KEY')
+        self.model = "llava-v1.5-7b-4096-preview"
 
-    async def execute(self, image_url):
+    async def execute(self, image_url: str) -> str:
         async with aiohttp.ClientSession() as session:
+            # Download the image
             async with session.get(image_url) as response:
                 image_data = await response.read()
             
+            # Encode the image
             encoded_image = base64.b64encode(image_data).decode('utf-8')
-            vision_api_url = f"https://vision.googleapis.com/v1/images:annotate?key={self.api_key}"
+            
+            # Prepare the API request
+            url = "https://api.groq.com/openai/v1/chat/completions"
+            headers = {
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json"
+            }
             payload = {
-                "requests": [
+                "model": self.model,
+                "messages": [
                     {
-                        "image": {"content": encoded_image},
-                        "features": [{"type": "LABEL_DETECTION", "maxResults": 5}]
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/jpeg;base64,{encoded_image}"
+                                }
+                            },
+                            {
+                                "type": "text",
+                                "text": "Describe this image in detail. Include information about what you see, the setting, any activities or objects, and the overall mood or atmosphere of the image."
+                            }
+                        ]
                     }
-                ]
+                ],
+                "max_tokens": 300
             }
             
-            async with session.post(vision_api_url, json=payload) as response:
+            # Make the API call
+            async with session.post(url, headers=headers, json=payload) as response:
                 result = await response.json()
-                labels = result['responses'][0]['labelAnnotations']
-                return [label['description'] for label in labels]
+                
+                if 'choices' in result and len(result['choices']) > 0:
+                    return result['choices'][0]['message']['content']
+                else:
+                    return "Sorry, I couldn't analyze the image."
 
     def relevance(self, query):
-        return 0.9 if any(keyword in query.lower() for keyword in ['image', 'picture', 'photo']) else 0.2
+        image_keywords = ['image', 'picture', 'photo', 'img', 'pic', 'photograph']
+        return 0.9 if any(keyword in query.lower() for keyword in image_keywords) else 0.2
 
 class LaTeXRenderingTool(Tool):
     def __init__(self):
