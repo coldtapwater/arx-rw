@@ -4,7 +4,7 @@ import os
 import aiohttp
 import asyncio
 import logging
-from utils.tools2 import get_all_tools
+from utils.tools2 import get_all_tools, ImageRecognitionTool
 from utils.models.models import JailbreakPatterns
 import json
 import re
@@ -162,6 +162,20 @@ Respond with either 'casual' or 'deep'.
         try:
             query_type = await self.route_query(query)
             use_deep_mode = (query_type == "deep")
+
+            image_url = None
+            if message.attachments:
+                for attachment in message.attachments:
+                    if attachment.content_type.startswith('image/'):
+                        image_url = attachment.url
+                        break
+            
+            if image_url:
+                await self.update_thinking_message(thinking_message, "Analyzing image...")
+                image_recognition_tool = next((tool for tool in self.tools if isinstance(tool, ImageRecognitionTool)), None)
+                if image_recognition_tool:
+                    image_description = await image_recognition_tool.execute(image_url)
+                    query += f"\n\nImage description: {image_description}"
 
             if use_deep_mode:
                 model = self.DEEP_MODEL
