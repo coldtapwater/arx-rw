@@ -23,15 +23,15 @@ class JailbreakDetector:
         return any(re.search(pattern, message, re.IGNORECASE) for pattern in self.patterns)
 
 class PaginatedEmbed:
-    def __init__(self, bot, ctx, content, title="Response", color=discord.Color.blue()):
+    def __init__(self, bot, message, content, title="Response", color=discord.Color.blue()):
         self.bot = bot
-        self.ctx = ctx
+        self.message = message
         self.content = content
         self.title = title
         self.color = color
         self.pages = []
         self.current_page = 0
-        self.message = None
+        self.response_message = None
         self.create_pages()
 
     def create_pages(self):
@@ -53,13 +53,13 @@ class PaginatedEmbed:
         return embed
 
     async def send_initial_message(self):
-        self.message = await self.ctx.send(embed=self.get_page())
+        self.response_message = await self.message.channel.send(embed=self.get_page())
         if len(self.pages) > 1:
             await self.add_reactions()
 
     async def add_reactions(self):
-        await self.message.add_reaction('⬅️')
-        await self.message.add_reaction('➡️')
+        await self.response_message.add_reaction('⬅️')
+        await self.response_message.add_reaction('➡️')
 
     async def run(self):
         await self.send_initial_message()
@@ -68,7 +68,7 @@ class PaginatedEmbed:
 
     async def listen_for_reactions(self):
         def check(reaction, user):
-            return user == self.ctx.author and str(reaction.emoji) in ['⬅️', '➡️'] and reaction.message.id == self.message.id
+            return user == self.message.author and str(reaction.emoji) in ['⬅️', '➡️'] and reaction.message.id == self.response_message.id
 
         while True:
             try:
@@ -77,10 +77,10 @@ class PaginatedEmbed:
                     self.current_page += 1
                 elif str(reaction.emoji) == '⬅️' and self.current_page > 0:
                     self.current_page -= 1
-                await self.message.edit(embed=self.get_page())
-                await self.message.remove_reaction(reaction, user)
+                await self.response_message.edit(embed=self.get_page())
+                await self.response_message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
-                await self.message.clear_reactions()
+                await self.response_message.clear_reactions()
                 break
 
 class iLBEngineCog(commands.Cog):
@@ -186,7 +186,7 @@ class iLBEngineCog(commands.Cog):
                 final_answer = await self.deep_thinking(query, initial_answer)
                 
                 await thinking_message.delete()
-                paginated_embed = PaginatedEmbed(self.bot, message.channel, final_answer, "iLB Response")
+                paginated_embed = PaginatedEmbed(self.bot, message, final_answer, "iLB Response")
                 await paginated_embed.run()
                 
                 self.update_context(message.author.id, query, final_answer)
