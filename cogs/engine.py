@@ -156,5 +156,5 @@ class iLBEngineCog(commands.Cog):
         self.contexts.clear()
         await ctx.send("Caches and contexts cleared.")
 
-def setup(bot):
-    bot.add_cog(iLBEngineCog(bot))
+async def setup(bot):
+    await bot.add_cog(iLBEngineCog(bot))
