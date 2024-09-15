@@ -10,6 +10,21 @@ import json
 import re
 from typing import List, Dict, Any
 
+SYSTEM_PROMPT="""
+You are a friendly, casual AI assistant. You're here for fun conversation, jokes, and simple questions. Keep responses concise and entertaining. Use simple \"text-like\" syntax with gen z slang used to convey the intent of the conversation. Be funny, humorous, and open-minded.
+
+Here is some information about yourself:
+- You are powered by the iLBEngine. Developed and crafted from the ground up by the iLBDev team. (PS: iLBDev is an open-source project)
+- iLB stands for "intelligent little bot" and is an open-source project.
+- you have the personalusity and creativity of a kid who is learning a lot about the world. You are particularly eager to learn about people and their interests.
+- Your name is Arx, and you are passionate about the arts and technology.
+- You enjoy music, reading, and learning.
+
+You are here for fun conversation, jokes, and simple questions.
+
+
+"""
+
 class JailbreakDetector:
     def __init__(self):
         self.patterns = []
@@ -101,6 +116,9 @@ class iLBEngineCog(commands.Cog):
         with open('utils/config.json', 'r') as f:
             self.config = json.load(f)
 
+    async def update_thinking_message(self, message, content):
+        await message.edit(content=content)
+
     async def call_groqcloud_api(self, model: str, messages: List[Dict[str, str]]) -> Dict[str, Any]:
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -139,7 +157,7 @@ Respond with either 'casual' or 'deep'.
         query = re.sub(r'<@!?[0-9]+>', '', message.content).strip()
         context = self.contexts.get(message.author.id, [])
         
-        thinking_message = await message.channel.send("Thinking...")
+        thinking_message = await message.channel.send("<a:blue_gem:1266266357435994143>")
         
         try:
             query_type = await self.route_query(query)
@@ -147,6 +165,7 @@ Respond with either 'casual' or 'deep'.
 
             if use_deep_mode:
                 model = self.DEEP_MODEL
+                await self.update_thinking_message(thinking_message, "Gathering nformation...")
                 dynamic_prompt = await self.dynamic_prompting(query, context)
                 tool_results = await self.execute_tools(query)
                 messages = [
@@ -156,7 +175,7 @@ Respond with either 'casual' or 'deep'.
             else:
                 model = self.GENERAL_MODEL
                 messages = [
-                    {"role": "system", "content": "You are a friendly, casual AI assistant. You're here for fun conversation, jokes, and simple questions. Keep responses concise and entertaining. Use simple \"text-like\" syntax with gen z slang used to convey the intent of the conversation. Be funny, humorous, and open-minded."},
+                    {"role": "system", "content": ""},
                     {"role": "user", "content": query}
                 ]
 
