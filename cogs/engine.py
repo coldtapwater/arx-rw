@@ -252,6 +252,7 @@ Respond with either 'casual' or 'deep'.
     async def on_message(self, message):
         if self.bot.user in message.mentions:
             await self.process_mention(message)
+        await self.bot.process_commands(self.bot, message)
 
     def update_context(self, user_id: int, query: str, response: str):
         if user_id not in self.contexts:
