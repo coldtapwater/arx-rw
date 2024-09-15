@@ -94,6 +94,8 @@ class iLBEngineCog(commands.Cog):
         self.tools = get_all_tools()
         self.jailbreak_detector = JailbreakDetector()
         self.load_config()
+        self.GENERAL_MODEL = "mixtral-8x7b-32768"  # Model for general queries
+        self.DEEP_MODEL = "llama3-70b-8192"  # Model for complex queries
 
     def load_config(self):
         with open('utils/config.json', 'r') as f:
@@ -118,32 +120,20 @@ class iLBEngineCog(commands.Cog):
                     logging.error(f"API call failed: {response.status}")
                     return None
 
-    async def route_query(self, query: str) -> Dict[str, Any]:
+    async def route_query(self, query: str) -> str:
         router_messages = [
-            {"role": "system", "content": "You are a routing assistant. Your task is to determine the best model for handling the given query and whether deep thinking is required."},
+            {"role": "system", "content": "You are a routing assistant. Your task is to determine whether the given query requires deep thinking and research or if it's a casual conversation."},
             {"role": "user", "content": f"""Query: {query}
-Please analyze the query and provide the following information:
-1. The most appropriate model from these options: gemma2-9b-it, llama-3.1-8b-instant, mixtral-8x7b-32768, llama3-70b-8192
-2. Whether deep thinking is required (yes/no)
-3. Whether to use tools (yes/no)
-
-Respond in JSON format like this:
-{{
-    "model": "selected_model_name",
-    "deep_thinking": true/false,
-    "use_tools": true/false
-}}
-
-For simple queries like jokes, greetings, or basic facts, choose a simpler model, set deep_thinking to false, and use_tools to false.
-For complex queries requiring research or analysis, choose a more powerful model, set deep_thinking to true, and use_tools to true."""}
+Is this query asking for in-depth information, analysis, or research? Or is it a casual conversation, joke, or simple question?
+Respond with either 'casual' or 'deep'.
+'casual' for simple queries, jokes, greetings, or everyday conversation.
+'deep' for queries requiring research, analysis, or complex explanations."""}
         ]
         response = await self.call_groqcloud_api("gemma-7b-it", router_messages)
         if response and "choices" in response:
-            try:
-                return json.loads(response["choices"][0]["message"]["content"].strip())
-            except json.JSONDecodeError:
-                logging.error("Failed to parse router response as JSON")
-        return {"model": "llama3-70b-8192", "deep_thinking": True, "use_tools": True}  # Default fallback
+            decision = response["choices"][0]["message"]["content"].strip().lower()
+            return "deep" if "deep" in decision else "casual"
+        return "deep"  # Default to deep thinking if routing fails
 
     async def process_mention(self, message):
         query = re.sub(r'<@!?[0-9]+>', '', message.content).strip()
@@ -152,30 +142,32 @@ For complex queries requiring research or analysis, choose a more powerful model
         thinking_message = await message.channel.send("Thinking...")
         
         try:
-            route_decision = await self.route_query(query)
-            routed_model = route_decision["model"]
-            use_deep_thinking = route_decision["deep_thinking"]
-            use_tools = route_decision["use_tools"]
+            query_type = await self.route_query(query)
+            use_deep_mode = (query_type == "deep")
 
-            dynamic_prompt = await self.dynamic_prompting(query, context)
-            
-            messages = [
-                {"role": "system", "content": "You are a helpful AI assistant."},
-                {"role": "user", "content": dynamic_prompt}
-            ]
-
-            if use_tools:
+            if use_deep_mode:
+                model = self.DEEP_MODEL
+                dynamic_prompt = await self.dynamic_prompting(query, context)
                 tool_results = await self.execute_tools(query)
-                messages[1]["content"] += f"\nAdditional context: {json.dumps(tool_results)}"
+                messages = [
+                    {"role": "system", "content": "You are a helpful AI assistant capable of in-depth analysis and research."},
+                    {"role": "user", "content": f"{dynamic_prompt}\nAdditional context: {json.dumps(tool_results)}"}
+                ]
+            else:
+                model = self.GENERAL_MODEL
+                messages = [
+                    {"role": "system", "content": "You are a friendly, casual AI assistant. You're here for fun conversation, jokes, and simple questions. Keep responses concise and entertaining. Use simple \"text-like\" syntax with gen z slang used to convey the intent of the conversation. Be funny, humorous, and open-minded."},
+                    {"role": "user", "content": query}
+                ]
 
-            initial_response = await self.call_groqcloud_api(routed_model, messages)
-            if initial_response and "choices" in initial_response:
-                initial_answer = initial_response["choices"][0]["message"]["content"].strip()
+            response = await self.call_groqcloud_api(model, messages)
+            if response and "choices" in response:
+                answer = response["choices"][0]["message"]["content"].strip()
                 
-                if use_deep_thinking:
-                    final_answer = await self.deep_thinking(query, initial_answer)
+                if use_deep_mode:
+                    final_answer = await self.deep_thinking(query, answer)
                 else:
-                    final_answer = initial_answer
+                    final_answer = answer
 
                 await thinking_message.delete()
                 message_handler = MessageHandler(self.bot, message, final_answer, "iLB Response")
@@ -213,7 +205,7 @@ For complex queries requiring research or analysis, choose a more powerful model
         if reflection_response and "choices" in reflection_response:
             reflection = reflection_response["choices"][0]["message"]["content"].strip()
             
-            improvement_prompt = f"Based on the reflection: {reflection}\nProvide an improved and expanded answer to the original query: {query}"
+            improvement_prompt = f"Based on the reflection: {reflection}\nProvide an improved and expanded answer to the original query: '{query}'. Do not however include how you improved upon your response. Simply provide an improved and expanded answer."
             improved_response = await self.call_groqcloud_api("llama3-70b-8192", [{"role": "user", "content": improvement_prompt}])
             
             if improved_response and "choices" in improved_response:
