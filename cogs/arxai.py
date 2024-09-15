@@ -28,6 +28,7 @@ nltk.download('punkt', quiet=True)
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 LLAMA_GUARD_MODEL = 'llama-guard-3-8b'
 MAIN_MODEL = 'llama3-groq-70b-8192-tool-use-preview'
+ROUTER_MODEL = 'llama3-8b-8192'
 
 class ConversationContext:
     def __init__(self, max_messages=10):
