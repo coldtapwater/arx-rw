@@ -33,7 +33,7 @@ class iLBEngineCog(commands.Cog):
         self.load_config()
 
     def load_config(self):
-        with open('config.json', 'r') as f:
+        with open('utils/config.json', 'r') as f:
             self.config = json.load(f)
 
     async def call_groqcloud_api(self, model: str, messages: List[Dict[str, str]]) -> Dict[str, Any]:

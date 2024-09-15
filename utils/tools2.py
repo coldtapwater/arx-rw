@@ -24,19 +24,24 @@ class Tool:
 class WebSearchTool(Tool):
     def __init__(self):
         super().__init__("Web Search")
-        self.api_key = os.getenv('SERPAPI_KEY')
-        self.search_engine_id = os.getenv('SEARCH_ENGINE_ID')
+        self.api_key = os.getenv('GOOGLE_API_KEY')
+        self.search_engine_id = os.getenv('GOOGLE_CSE_ID')
 
     async def execute(self, query):
         async with aiohttp.ClientSession() as session:
             params = {
                 'q': query,
                 'key': self.api_key,
-                'cx': self.search_engine_id
+                'cx': self.search_engine_id,
+                'num': 5  # Limit to 5 results
             }
-            async with session.get('https://www.googleapis.com/customsearch/v1', params=params) as response:
+            url = 'https://www.googleapis.com/customsearch/v1'
+            async with session.get(url, params=params) as response:
                 data = await response.json()
-                return [item['snippet'] for item in data.get('items', [])][:5]
+                results = []
+                for item in data.get('items', []):
+                    results.append(f"Title: {item['title']}\nSnippet: {item['snippet']}\nLink: {item['link']}")
+                return results
 
     def relevance(self, query):
         return 0.8 if any(keyword in query.lower() for keyword in ['search', 'find', 'look up']) else 0.5
