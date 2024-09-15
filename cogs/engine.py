@@ -22,7 +22,7 @@ class JailbreakDetector:
         message = message.lower()
         return any(re.search(pattern, message, re.IGNORECASE) for pattern in self.patterns)
 
-class PaginatedEmbed:
+class MessageHandler:
     def __init__(self, bot, message, content, title="Response", color=discord.Color.blue()):
         self.bot = bot
         self.message = message
@@ -32,7 +32,13 @@ class PaginatedEmbed:
         self.pages = []
         self.current_page = 0
         self.response_message = None
-        self.create_pages()
+
+    async def send_response(self):
+        if len(self.content) <= 750:  # Send as a normal message if content is short
+            self.response_message = await self.message.channel.send(self.content)
+        else:
+            self.create_pages()
+            await self.send_embed()
 
     def create_pages(self):
         content = self.content
@@ -46,25 +52,21 @@ class PaginatedEmbed:
             self.pages.append(content[:split_index])
             content = content[split_index:].strip()
 
-    def get_page(self):
+    def get_embed(self):
         embed = discord.Embed(title=f"{self.title} (Page {self.current_page + 1}/{len(self.pages)})",
                               description=self.pages[self.current_page],
                               color=self.color)
         return embed
 
-    async def send_initial_message(self):
-        self.response_message = await self.message.channel.send(embed=self.get_page())
+    async def send_embed(self):
+        self.response_message = await self.message.channel.send(embed=self.get_embed())
         if len(self.pages) > 1:
             await self.add_reactions()
+            self.bot.loop.create_task(self.listen_for_reactions())
 
     async def add_reactions(self):
         await self.response_message.add_reaction('⬅️')
         await self.response_message.add_reaction('➡️')
-
-    async def run(self):
-        await self.send_initial_message()
-        if len(self.pages) > 1:
-            self.bot.loop.create_task(self.listen_for_reactions())
 
     async def listen_for_reactions(self):
         def check(reaction, user):
@@ -77,7 +79,7 @@ class PaginatedEmbed:
                     self.current_page += 1
                 elif str(reaction.emoji) == '⬅️' and self.current_page > 0:
                     self.current_page -= 1
-                await self.response_message.edit(embed=self.get_page())
+                await self.response_message.edit(embed=self.get_embed())
                 await self.response_message.remove_reaction(reaction, user)
             except asyncio.TimeoutError:
                 await self.response_message.clear_reactions()
@@ -128,7 +130,7 @@ class iLBEngineCog(commands.Cog):
 
     async def dynamic_prompting(self, query: str, context: List[Dict[str, str]]) -> str:
         prompt_messages = [
-            {"role": "system", "content": "You are an AI assistant tasked with formulating an effective prompt to answer the user's query. Consider the context provided and create a prompt that will guide the AI to give the best possible answer."},
+            {"role": "system", "content": "You are an AI assistant tasked with formulating an effective prompt to answer the user's query. Consider the context provided and create a prompt that will guide the AI to give the best possible answer. Be sure to understand the user's intent. For example if the user is looking for information, take an informative tone, if the user is looking to be silly, engage with the user in an equally silly manner"},
             {"role": "user", "content": f"Query: {query}\nContext: {json.dumps(context)}\nFormulate an effective prompt to answer this query."}
         ]
         response = await self.call_groqcloud_api("llama-3.1-70b-versatile", prompt_messages)
@@ -145,7 +147,7 @@ class iLBEngineCog(commands.Cog):
         return tool_results
 
     async def deep_thinking(self, query: str, initial_response: str) -> str:
-        reflection_prompt = f"Reflect on the following query and initial response:\nQuery: {query}\nInitial Response: {initial_response}\nWhat aspects of the response could be improved or expanded upon?"
+        reflection_prompt = f"Reflect on the following query and initial response:\nQuery: {query}\nInitial Response: {initial_response}\nWhat aspects of the response could be improved or expanded upon? If no aspects are applicable, simply make the content more digestable and user-friendly."
         reflection_response = await self.call_groqcloud_api("llama3-70b-8192", [{"role": "user", "content": reflection_prompt}])
         
         if reflection_response and "choices" in reflection_response:
@@ -186,8 +188,8 @@ class iLBEngineCog(commands.Cog):
                 final_answer = await self.deep_thinking(query, initial_answer)
                 
                 await thinking_message.delete()
-                paginated_embed = PaginatedEmbed(self.bot, message, final_answer, "iLB Response")
-                await paginated_embed.run()
+                message_handler = MessageHandler(self.bot, message, final_answer, "iLB Response")
+                await message_handler.send_response()
                 
                 self.update_context(message.author.id, query, final_answer)
             else:
