@@ -118,15 +118,75 @@ class iLBEngineCog(commands.Cog):
                     logging.error(f"API call failed: {response.status}")
                     return None
 
-    async def route_query(self, query: str) -> str:
+    async def route_query(self, query: str) -> Dict[str, Any]:
         router_messages = [
-            {"role": "system", "content": "You are a routing assistant. Your task is to determine the best model for handling the given query."},
-            {"role": "user", "content": f"Query: {query}\nPlease select the most appropriate model from the following options:\n1. gemma2-9b-it\n2. llama-3.1-8b-instant\n3. mixtral-8x7b-32768\n4. llama3-70b-8192\nRespond with only the model name."}
+            {"role": "system", "content": "You are a routing assistant. Your task is to determine the best model for handling the given query and whether deep thinking is required."},
+            {"role": "user", "content": f"""Query: {query}
+Please analyze the query and provide the following information:
+1. The most appropriate model from these options: gemma2-9b-it, llama-3.1-8b-instant, mixtral-8x7b-32768, llama3-70b-8192
+2. Whether deep thinking is required (yes/no)
+3. Whether to use tools (yes/no)
+
+Respond in JSON format like this:
+{{
+    "model": "selected_model_name",
+    "deep_thinking": true/false,
+    "use_tools": true/false
+}}
+
+For simple queries like jokes, greetings, or basic facts, choose a simpler model, set deep_thinking to false, and use_tools to false.
+For complex queries requiring research or analysis, choose a more powerful model, set deep_thinking to true, and use_tools to true."""}
         ]
         response = await self.call_groqcloud_api("gemma-7b-it", router_messages)
         if response and "choices" in response:
-            return response["choices"][0]["message"]["content"].strip()
-        return "llama3-70b-8192"  # Default to the most capable model if routing fails
+            try:
+                return json.loads(response["choices"][0]["message"]["content"].strip())
+            except json.JSONDecodeError:
+                logging.error("Failed to parse router response as JSON")
+        return {"model": "llama3-70b-8192", "deep_thinking": True, "use_tools": True}  # Default fallback
+
+    async def process_mention(self, message):
+        query = re.sub(r'<@!?[0-9]+>', '', message.content).strip()
+        context = self.contexts.get(message.author.id, [])
+        
+        thinking_message = await message.channel.send("Thinking...")
+        
+        try:
+            route_decision = await self.route_query(query)
+            routed_model = route_decision["model"]
+            use_deep_thinking = route_decision["deep_thinking"]
+            use_tools = route_decision["use_tools"]
+
+            dynamic_prompt = await self.dynamic_prompting(query, context)
+            
+            messages = [
+                {"role": "system", "content": "You are a helpful AI assistant."},
+                {"role": "user", "content": dynamic_prompt}
+            ]
+
+            if use_tools:
+                tool_results = await self.execute_tools(query)
+                messages[1]["content"] += f"\nAdditional context: {json.dumps(tool_results)}"
+
+            initial_response = await self.call_groqcloud_api(routed_model, messages)
+            if initial_response and "choices" in initial_response:
+                initial_answer = initial_response["choices"][0]["message"]["content"].strip()
+                
+                if use_deep_thinking:
+                    final_answer = await self.deep_thinking(query, initial_answer)
+                else:
+                    final_answer = initial_answer
+
+                await thinking_message.delete()
+                message_handler = MessageHandler(self.bot, message, final_answer, "iLB Response")
+                await message_handler.send_response()
+                
+                self.update_context(message.author.id, query, final_answer)
+            else:
+                await thinking_message.edit(content="I'm sorry, I couldn't generate a response. Please try again.")
+        except Exception as e:
+            await thinking_message.edit(content=f"Oops! Something went wrong. Please try again or contact the developer.\nError: {str(e)}")
+            logging.error(f"Error in process_mention: {str(e)}")
 
     async def dynamic_prompting(self, query: str, context: List[Dict[str, str]]) -> str:
         prompt_messages = [
@@ -165,38 +225,6 @@ class iLBEngineCog(commands.Cog):
     async def on_message(self, message):
         if self.bot.user in message.mentions:
             await self.process_mention(message)
-
-    async def process_mention(self, message):
-        query = re.sub(r'<@!?[0-9]+>', '', message.content).strip()
-        context = self.contexts.get(message.author.id, [])
-        
-        thinking_message = await message.channel.send("Thinking...")
-        
-        try:
-            routed_model = await self.route_query(query)
-            dynamic_prompt = await self.dynamic_prompting(query, context)
-            tool_results = await self.execute_tools(query)
-            
-            messages = [
-                {"role": "system", "content": "You are a helpful AI assistant."},
-                {"role": "user", "content": f"{dynamic_prompt}\nAdditional context: {json.dumps(tool_results)}"}
-            ]
-            
-            initial_response = await self.call_groqcloud_api(routed_model, messages)
-            if initial_response and "choices" in initial_response:
-                initial_answer = initial_response["choices"][0]["message"]["content"].strip()
-                final_answer = await self.deep_thinking(query, initial_answer)
-                
-                await thinking_message.delete()
-                message_handler = MessageHandler(self.bot, message, final_answer, "iLB Response")
-                await message_handler.send_response()
-                
-                self.update_context(message.author.id, query, final_answer)
-            else:
-                await thinking_message.edit(content="I'm sorry, I couldn't generate a response. Please try again.")
-        except Exception as e:
-            await thinking_message.edit(content=f"Oops! Something went wrong. Please try again or contact the developer.\nError: {str(e)}")
-            logging.error(f"Error in process_mention: {str(e)}")
 
     def update_context(self, user_id: int, query: str, response: str):
         if user_id not in self.contexts:
