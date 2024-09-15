@@ -18,9 +18,70 @@ class JailbreakDetector:
         self.patterns = await JailbreakPatterns.all().values_list('pattern', flat=True)
 
     async def check(self, message):
-        await self.load_patterns()  # Refresh patterns from the database
+        await self.load_patterns()
         message = message.lower()
         return any(re.search(pattern, message, re.IGNORECASE) for pattern in self.patterns)
+
+class PaginatedEmbed:
+    def __init__(self, bot, ctx, content, title="Response", color=discord.Color.blue()):
+        self.bot = bot
+        self.ctx = ctx
+        self.content = content
+        self.title = title
+        self.color = color
+        self.pages = []
+        self.current_page = 0
+        self.message = None
+        self.create_pages()
+
+    def create_pages(self):
+        content = self.content
+        while content:
+            if len(content) <= 2000:
+                self.pages.append(content)
+                break
+            split_index = content.rfind('\n', 0, 2000)
+            if split_index == -1:
+                split_index = 2000
+            self.pages.append(content[:split_index])
+            content = content[split_index:].strip()
+
+    def get_page(self):
+        embed = discord.Embed(title=f"{self.title} (Page {self.current_page + 1}/{len(self.pages)})",
+                              description=self.pages[self.current_page],
+                              color=self.color)
+        return embed
+
+    async def send_initial_message(self):
+        self.message = await self.ctx.send(embed=self.get_page())
+        if len(self.pages) > 1:
+            await self.add_reactions()
+
+    async def add_reactions(self):
+        await self.message.add_reaction('⬅️')
+        await self.message.add_reaction('➡️')
+
+    async def run(self):
+        await self.send_initial_message()
+        if len(self.pages) > 1:
+            self.bot.loop.create_task(self.listen_for_reactions())
+
+    async def listen_for_reactions(self):
+        def check(reaction, user):
+            return user == self.ctx.author and str(reaction.emoji) in ['⬅️', '➡️'] and reaction.message.id == self.message.id
+
+        while True:
+            try:
+                reaction, user = await self.bot.wait_for('reaction_add', timeout=60.0, check=check)
+                if str(reaction.emoji) == '➡️' and self.current_page < len(self.pages) - 1:
+                    self.current_page += 1
+                elif str(reaction.emoji) == '⬅️' and self.current_page > 0:
+                    self.current_page -= 1
+                await self.message.edit(embed=self.get_page())
+                await self.message.remove_reaction(reaction, user)
+            except asyncio.TimeoutError:
+                await self.message.clear_reactions()
+                break
 
 class iLBEngineCog(commands.Cog):
     def __init__(self, bot):
@@ -124,7 +185,10 @@ class iLBEngineCog(commands.Cog):
                 initial_answer = initial_response["choices"][0]["message"]["content"].strip()
                 final_answer = await self.deep_thinking(query, initial_answer)
                 
-                await thinking_message.edit(content=final_answer)
+                await thinking_message.delete()
+                paginated_embed = PaginatedEmbed(self.bot, message.channel, final_answer, "iLB Response")
+                await paginated_embed.run()
+                
                 self.update_context(message.author.id, query, final_answer)
             else:
                 await thinking_message.edit(content="I'm sorry, I couldn't generate a response. Please try again.")
@@ -142,16 +206,13 @@ class iLBEngineCog(commands.Cog):
     @commands.command(name='jailbreak2')
     @commands.is_owner()
     async def jailbreak(self, ctx, pattern: str):
-        # Add jailbreak pattern to database
         await JailbreakPatterns.create(pattern=pattern)
         await self.jailbreak_detector.load_patterns()
         await ctx.send(f"Jailbreak pattern '{pattern}' added to database.")
-        await ctx.send("Jailbreak pattern added.")
 
     @commands.command(name='clear2')
     @commands.is_owner()
     async def clear(self, ctx):
-        # Clear caches and contexts
         self.model_cache.clear()
         self.contexts.clear()
         await ctx.send("Caches and contexts cleared.")
