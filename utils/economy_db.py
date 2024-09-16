@@ -1,5 +1,5 @@
 from tortoise.exceptions import DoesNotExist
-from utils.models.models import User, Inventory, Shop
+from utils.models.models import User, Inventory, Shop, Badge
 import discord
 from discord.ext import commands
 import utils.configs as uc
