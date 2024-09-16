@@ -77,7 +77,11 @@ class Shop(commands.Cog):
         """Shows your inventory or another user's inventory"""
         if user is None:
             user = ctx.author
-        await get_user_inventory(ctx, user_id=user.id)
+        await get_user_inventory(user_id=user.id)
+        message = "inventory for " + user.name
+        for item in await get_user_inventory(user_id=user.id):
+            message+=f"\n**{item.item_name}** - x{item.quantity}"
+        await ctx.send(message)
 
 
 async def setup(bot):

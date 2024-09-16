@@ -94,15 +94,10 @@ async def add_item_to_inventory(user_id: int, item_name: str, quantity: int = 1)
     
     await inventory_item.save()
 
-async def get_user_inventory(ctx, user_id: int):
+async def get_user_inventory(user_id: int):
     user, _ = await User.get_or_create(id=user_id)
     inventory = await Inventory.filter(user=user).all()
-    message = "inventory for {}:\n".format(ctx.author)
-
-    for item in inventory:
-        message += f"[+]{item.item_name}: x{item.quantity}\n"
-
-    return await ctx.send(message)
+    return inventory
 
 async def get_shop_items():
     return await Shop.all()
