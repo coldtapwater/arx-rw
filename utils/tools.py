@@ -191,63 +191,11 @@ class PythonEvaluationTool(Tool):
     def relevance(self, query):
         return 0.9 if any(keyword in query.lower() for keyword in ['python', 'code', 'script']) else 0.3
 
-class GitHubKnowledgeBaseTool(Tool):
-    def __init__(self):
-        super().__init__("GitHub Knowledge Base")
-        self.github_token = os.getenv('GITHUB_TOKEN')
-        self.repo_name = "coldtapwater/chatgpt_system_prompt"  # Replace with your actual repository name
-        self.github = Github(self.github_token)
-        self.repo = self.github.get_repo(self.repo_name)
-        self.knowledge_path = "prompts/gpts/knowledge"
-
-    async def execute(self, query):
-        try:
-            relevant_files = await self.search_files(self.knowledge_path, query)
-            results = []
-            for file in relevant_files[:3]:  # Limit to top 3 relevant files
-                file_content = file.decoded_content.decode('utf-8')
-                snippet = self.extract_snippet(file_content, query)
-                results.append(f"From {file.path}:\n{snippet}\n")
-
-            if results:
-                return "\n".join(results)
-            else:
-                return "No relevant info found in the knowledge base, fam. Maybe try rephrasing?"
-
-        except Exception as e:
-            return f"Oops, hit a snag accessing the GitHub knowledge base: {str(e)}"
-
-    async def search_files(self, path, query):
-        relevant_files = []
-        contents = self.repo.get_contents(path)
-        while contents:
-            file_content = contents.pop(0)
-            if file_content.type == "dir":
-                contents.extend(self.repo.get_contents(file_content.path))
-            elif file_content.name.endswith('.txt'):
-                file_text = file_content.decoded_content.decode('utf-8')
-                if query.lower() in file_text.lower():
-                    relevant_files.append(file_content)
-        return relevant_files
-
-    def extract_snippet(self, content, query):
-        lines = content.split('\n')
-        for i, line in enumerate(lines):
-            if query.lower() in line.lower():
-                start = max(0, i - 2)
-                end = min(len(lines), i + 3)
-                return '\n'.join(lines[start:end])
-        return content[:200] + "..."  # Fallback to first 200 chars if query not found
-
-    def relevance(self, query):
-        return 0.7
-
 def get_all_tools():
     return [
         WebSearchTool(),
         GitHubSearchTool(),
         ImageRecognitionTool(),
         LaTeXRenderingTool(),
-        PythonEvaluationTool(),
-        GitHubKnowledgeBaseTool()
+        PythonEvaluationTool()
     ]

@@ -4,7 +4,7 @@ import os
 import aiohttp
 import asyncio
 import logging
-from utils.tools import get_all_tools, ImageRecognitionTool, GitHubKnowledgeBaseTool
+from utils.tools import get_all_tools, ImageRecognitionTool
 from utils.models.models import JailbreakPatterns
 import json
 import re
@@ -219,16 +219,6 @@ Respond with either 'casual' or 'deep'.
             if use_deep_mode:
                 model = self.DEEP_MODEL
                 await self.update_thinking_message(thinking_message, "Gathering information...")
-
-                
-                github_knowledge_tool = next((tool for tool in self.tools if isinstance(tool, GitHubKnowledgeBaseTool)), None)
-                if github_knowledge_tool:
-                    await self.update_thinking_message(thinking_message, "Searching knowledge base...")
-                    knowledge_base_info = await github_knowledge_tool.execute(query)
-                    query += f"\n\nRelevant knowledge base information:\n{knowledge_base_info}"
-
-                    kb_summary = knowledge_base_info[:100] + "..." if len(knowledge_base_info) > 100 else knowledge_base_info
-                await self.update_thinking_message(thinking_message, f"Searching knowledge base...\n-# Found information for: {kb_summary}")
 
                 dynamic_prompt = await self.dynamic_prompting(query, context)
                 tool_results = await self.execute_tools(query)
