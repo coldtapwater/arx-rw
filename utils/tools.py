@@ -202,37 +202,44 @@ class GitHubKnowledgeBaseTool(Tool):
 
     async def execute(self, query):
         try:
-            # Get contents of the knowledge directory
-            contents = self.repo.get_contents(self.knowledge_path)
-            relevant_files = []
-
-            for content_file in contents:
-                if content_file.type == "file" and content_file.name.endswith('.txt'):
-                    file_content = content_file.decoded_content.decode('utf-8')
-                    if query.lower() in file_content.lower():
-                        relevant_files.append(content_file)
-
-            # Extract relevant information
+            relevant_files = await self.search_files(self.knowledge_path, query)
             results = []
             for file in relevant_files[:3]:  # Limit to top 3 relevant files
                 file_content = file.decoded_content.decode('utf-8')
-                # Extract a relevant snippet (e.g., 500 characters around the query)
-                index = file_content.lower().find(query.lower())
-                start = max(0, index - 250)
-                end = min(len(file_content), index + 250)
-                snippet = file_content[start:end]
-                results.append(f"From {file.name}:\n{snippet}\n")
+                snippet = self.extract_snippet(file_content, query)
+                results.append(f"From {file.path}:\n{snippet}\n")
 
             if results:
                 return "\n".join(results)
             else:
-                return "No relevant information found in the knowledge base."
+                return "No relevant info found in the knowledge base, fam. Maybe try rephrasing?"
 
         except Exception as e:
-            return f"Error accessing GitHub knowledge base: {str(e)}"
+            return f"Oops, hit a snag accessing the GitHub knowledge base: {str(e)}"
+
+    async def search_files(self, path, query):
+        relevant_files = []
+        contents = self.repo.get_contents(path)
+        while contents:
+            file_content = contents.pop(0)
+            if file_content.type == "dir":
+                contents.extend(self.repo.get_contents(file_content.path))
+            elif file_content.name.endswith('.txt'):
+                file_text = file_content.decoded_content.decode('utf-8')
+                if query.lower() in file_text.lower():
+                    relevant_files.append(file_content)
+        return relevant_files
+
+    def extract_snippet(self, content, query):
+        lines = content.split('\n')
+        for i, line in enumerate(lines):
+            if query.lower() in line.lower():
+                start = max(0, i - 2)
+                end = min(len(lines), i + 3)
+                return '\n'.join(lines[start:end])
+        return content[:200] + "..."  # Fallback to first 200 chars if query not found
 
     def relevance(self, query):
-        # This tool is relevant for most queries, but you can adjust the relevance based on specific keywords
         return 0.7
 
 def get_all_tools():
