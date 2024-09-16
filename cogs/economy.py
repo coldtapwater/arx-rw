@@ -69,6 +69,7 @@ class Economy(commands.Cog):
         await message1.edit(content=f"earned.. | salary: {my_emojis.CURRENCY_EMOJI} {salary} {uc.CURRENCY}")
     
     @commands.command()
+    @commands.cooldown(1, 16*60*60, type=commands.BucketType.user)
     @utils.checks.blacklist_check()
     async def daily(self, ctx):
         daily_bonus = random.randint(100, 500)
