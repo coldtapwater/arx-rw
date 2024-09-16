@@ -2,7 +2,7 @@ import aiohttp
 import asyncio
 import base64
 import re
-from PIL import Image
+from PIL import Image, ImageOps
 import io
 import os
 from github import Github
@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 import sympy
 from sympy.parsing.latex import parse_latex
+from urllib import parse
 
 class Tool:
     def __init__(self, name):
@@ -121,29 +122,41 @@ class ImageRecognitionTool(Tool):
 class LaTeXRenderingTool(Tool):
     def __init__(self):
         super().__init__("LaTeX Rendering")
+        self.session = aiohttp.ClientSession()
+        self.START_CODE_BLOCK_RE = re.compile(r"^((```(la)?tex)(?=\s)|(```))")
 
-    async def execute(self, latex_code):
+    def cleanup_code_block(self, content):
+        if content.startswith("```") and content.endswith("```"):
+            return self.START_CODE_BLOCK_RE.sub("", content)[:-3]
+        return content.strip("` \n")
+
+    async def execute(self, equation):
+        base_url = "https://latex.codecogs.com/gif.latex?%5Cbg_white%20%5CLARGE%20"
+        equation = self.cleanup_code_block(equation)
+        equation = parse.quote(equation)
+        url = f"{base_url}{equation}"
+        
         try:
-            expr = parse_latex(latex_code)
-            plt.figure(figsize=(10, 2))
-            plt.text(0.5, 0.5, f'${latex_code}$', size=20, ha='center', va='center')
-            plt.axis('off')
+            async with self.session.get(url) as r:
+                image_data = await r.read()
+            image = Image.open(io.BytesIO(image_data)).convert("RGBA")
+            image = ImageOps.expand(image, border=10, fill="white")
             
-            img_buffer = io.BytesIO()
-            plt.savefig(img_buffer, format='png', bbox_inches='tight', pad_inches=0.1)
-            img_buffer.seek(0)
+            image_file_object = io.BytesIO()
+            image.save(image_file_object, format="png")
+            image_file_object.seek(0)
             
-            img = Image.open(img_buffer)
-            output_buffer = io.BytesIO()
-            img.save(output_buffer, format='PNG')
-            output_buffer.seek(0)
-            
-            return output_buffer
+            # Convert to base64 for easy transmission
+            base64_image = base64.b64encode(image_file_object.getvalue()).decode('utf-8')
+            return f"data:image/png;base64,{base64_image}"
         except Exception as e:
             return f"Error rendering LaTeX: {str(e)}"
 
     def relevance(self, query):
-        return 0.9 if '\\' in query or '$' in query else 0.1
+        return 0.9 if '\\' in query or '$' in query or 'latex' in query.lower() else 0.1
+
+    async def close(self):
+        await self.session.close()
 
 class PythonEvaluationTool(Tool):
     def __init__(self):

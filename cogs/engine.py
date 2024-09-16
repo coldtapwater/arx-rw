@@ -10,6 +10,8 @@ import json
 import re
 from typing import List, Dict, Any
 from urllib.parse import unquote
+import base64
+import io
 
 SYSTEM_PROMPT="""
 You are a friendly, casual AI assistant. You're here for fun conversation, jokes, and simple questions. Keep responses concise and entertaining. Use simple \"text-like\" syntax with gen z slang used to convey the intent of the conversation. Be funny, humorous, and open-minded.
@@ -162,6 +164,22 @@ Respond with either 'casual' or 'deep'.
         try:
             query_type = await self.route_query(query)
             use_deep_mode = (query_type == "deep")
+            tool_results = await self.execute_tools(query)
+
+            latex_image = next((result for result in tool_results if result.startswith("data:image/png;base64,")), None)
+            
+            if latex_image:
+                # Extract the base64 data
+                image_data = latex_image.split(',')[1]
+                image_binary = base64.b64decode(image_data)
+                
+                # Create a file object
+                file = discord.File(io.BytesIO(image_binary), filename="latex.png")
+                
+                # Send the image
+                await thinking_message.delete()
+                await message.channel.send(file=file)
+                return
 
             image_url = None
             if message.attachments:
