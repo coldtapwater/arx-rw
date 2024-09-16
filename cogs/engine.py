@@ -180,7 +180,7 @@ Respond with either 'casual' or 'deep'.
                 await thinking_message.delete()
                 await message.channel.send(file=file)
                 return
-
+            
             image_url = None
             if message.attachments:
                 for attachment in message.attachments:
@@ -193,9 +193,12 @@ Respond with either 'casual' or 'deep'.
                 image_recognition_tool = next((tool for tool in self.tools if isinstance(tool, ImageRecognitionTool)), None)
                 if image_recognition_tool:
                     image_description = await image_recognition_tool.execute(image_url)
-                    # Decode the URL-encoded image description
-                    image_description = unquote(image_description)
                     query += f"\n\nImage description: {image_description}"
+                    await self.update_thinking_message(thinking_message, "Image analyzed. Formulating response...")
+                    messages = [
+                {"role": "system", "content": "You are a helpful AI assistant capable of analyzing images and text."},
+                {"role": "user", "content": f"{dynamic_prompt}\nAdditional context: {json.dumps(tool_results)}"}
+            ]
 
             if use_deep_mode:
                 model = self.DEEP_MODEL
