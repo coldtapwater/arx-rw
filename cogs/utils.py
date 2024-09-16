@@ -47,14 +47,14 @@ class DeveloperUtilities(commands.Cog):
         return f"Last downtime: {self.start_time.strftime('%Y-%m-%d %H:%M:%S')} ({downtime_duration.total_seconds()} seconds ago)"
 
     @commands.command(name="uptime")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def uptime(self, ctx):
         """Shows the bot's uptime."""
         uptime = self.get_uptime()
         await ctx.send(f"**Uptime:** {uptime}")
 
     @commands.command(name="systeminfo", aliases=["sysinfo", "si", "sys"])
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def systeminfo(self, ctx):
         """Shows advanced system information."""
         system_info = self.get_system_info()
@@ -64,14 +64,14 @@ class DeveloperUtilities(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name="downtime")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def downtime(self, ctx):
         """Shows the last time the bot was down."""
         downtime = self.get_last_downtime()
         await ctx.send(downtime)
 
     @commands.command(name="supporter")
-    @commands.check(is_owner)
+    @commands.is_owner()
     async def supporter(self, ctx, user: discord.User):
         """Add a user to the list of supporters."""
         await gdb.add_supporter(user.id)
