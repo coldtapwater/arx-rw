@@ -4,7 +4,7 @@ import os
 import aiohttp
 import asyncio
 import logging
-from utils.tools import get_all_tools, ImageRecognitionTool
+from utils.tools import get_all_tools, ImageRecognitionTool, GitHubKnowledgeBaseTool
 from utils.models.models import JailbreakPatterns
 import json
 import re
@@ -24,6 +24,13 @@ Here is some information about yourself (note: this information should only be d
 - You enjoy music, reading, and learning.
 
 You are here for fun conversation, jokes, and simple questions.
+
+## Tools
+
+You have access to the following tools:
+`"""+', '.join(get_all_tools())+"""`
+
+You have full discretion to choose which tools you want to use. Use them as you wish. If you do not get a result from the tools you want, try again until you get a result that satisfies you.
 
 """
 
@@ -203,10 +210,18 @@ Respond with either 'casual' or 'deep'.
             if use_deep_mode:
                 model = self.DEEP_MODEL
                 await self.update_thinking_message(thinking_message, "Gathering information...")
+
+                
+                github_knowledge_tool = next((tool for tool in self.tools if isinstance(tool, GitHubKnowledgeBaseTool)), None)
+                if github_knowledge_tool:
+                    await self.update_thinking_message(thinking_message, "Searching knowledge base...")
+                    knowledge_base_info = await github_knowledge_tool.execute(query)
+                    query += f"\n\nRelevant knowledge base information:\n{knowledge_base_info}"
+
                 dynamic_prompt = await self.dynamic_prompting(query, context)
                 tool_results = await self.execute_tools(query)
                 messages = [
-                    {"role": "system", "content": "You are a helpful AI assistant capable of in-depth analysis and research."},
+                    {"role": "system", "content": "You are a helpful AI assistant capable of in-depth analysis and research. Continue to analyze and research as needed. "},
                     {"role": "user", "content": f"{dynamic_prompt}\nAdditional context: {json.dumps(tool_results)}"}
                 ]
             else:

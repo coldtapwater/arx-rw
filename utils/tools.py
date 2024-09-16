@@ -191,7 +191,49 @@ class PythonEvaluationTool(Tool):
     def relevance(self, query):
         return 0.9 if any(keyword in query.lower() for keyword in ['python', 'code', 'script']) else 0.3
 
-# Add more tool classes as needed
+class GitHubKnowledgeBaseTool(Tool):
+    def __init__(self):
+        super().__init__("GitHub Knowledge Base")
+        self.github_token = os.getenv('GITHUB_TOKEN')
+        self.repo_name = "coldtapwater/chatgpt_system_prompt"  # Replace with your actual repository name
+        self.github = Github(self.github_token)
+        self.repo = self.github.get_repo(self.repo_name)
+        self.knowledge_path = "prompts/gpts/knowledge"
+
+    async def execute(self, query):
+        try:
+            # Get contents of the knowledge directory
+            contents = self.repo.get_contents(self.knowledge_path)
+            relevant_files = []
+
+            for content_file in contents:
+                if content_file.type == "file" and content_file.name.endswith('.txt'):
+                    file_content = content_file.decoded_content.decode('utf-8')
+                    if query.lower() in file_content.lower():
+                        relevant_files.append(content_file)
+
+            # Extract relevant information
+            results = []
+            for file in relevant_files[:3]:  # Limit to top 3 relevant files
+                file_content = file.decoded_content.decode('utf-8')
+                # Extract a relevant snippet (e.g., 500 characters around the query)
+                index = file_content.lower().find(query.lower())
+                start = max(0, index - 250)
+                end = min(len(file_content), index + 250)
+                snippet = file_content[start:end]
+                results.append(f"From {file.name}:\n{snippet}\n")
+
+            if results:
+                return "\n".join(results)
+            else:
+                return "No relevant information found in the knowledge base."
+
+        except Exception as e:
+            return f"Error accessing GitHub knowledge base: {str(e)}"
+
+    def relevance(self, query):
+        # This tool is relevant for most queries, but you can adjust the relevance based on specific keywords
+        return 0.7
 
 def get_all_tools():
     return [
@@ -199,5 +241,6 @@ def get_all_tools():
         GitHubSearchTool(),
         ImageRecognitionTool(),
         LaTeXRenderingTool(),
-        PythonEvaluationTool()
+        PythonEvaluationTool(),
+        GitHubKnowledgeBaseTool()
     ]
