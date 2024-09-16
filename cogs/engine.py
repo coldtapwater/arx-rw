@@ -218,6 +218,9 @@ Respond with either 'casual' or 'deep'.
                     knowledge_base_info = await github_knowledge_tool.execute(query)
                     query += f"\n\nRelevant knowledge base information:\n{knowledge_base_info}"
 
+                    kb_summary = knowledge_base_info[:100] + "..." if len(knowledge_base_info) > 100 else knowledge_base_info
+                await self.update_thinking_message(thinking_message, f"Searching knowledge base...\n-# Found information for: {kb_summary}")
+
                 dynamic_prompt = await self.dynamic_prompting(query, context)
                 tool_results = await self.execute_tools(query)
                 messages = [
