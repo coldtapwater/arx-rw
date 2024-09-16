@@ -88,6 +88,8 @@ intents.members = True
 
 bot = commands.Bot(command_prefix=['r ', 'R ', 'r!', 'R!', '- ' ], intents=intents, owner_id=OWNER_ID)
 
+
+
 @bot.event
 async def on_ready():
     logger.info(f'{bot.user} has connected to Discord!')

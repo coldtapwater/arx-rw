@@ -12,6 +12,7 @@ class GitMonitorHandler(FileSystemEventHandler):
         self.repo_path = repo_path
         self.process = None
         self.repo = git.Repo(self.repo_path)
+        self.last_commit = self.repo.head.commit.hexsha
         self.start_bot()
 
     def start_bot(self):
@@ -28,29 +29,33 @@ class GitMonitorHandler(FileSystemEventHandler):
         if current_branch.name != 'master':
             print(f"Currently on branch '{current_branch.name}'. Switching to master...")
             self.repo.git.checkout('master')
-
         try:
             self.repo.remotes.origin.fetch()
             commits_behind = list(self.repo.iter_commits('master..origin/master'))
             if commits_behind:
                 print(f"Found {len(commits_behind)} new commit(s). Pulling updates...")
                 self.repo.remotes.origin.pull()
-                return True
+                new_commit = self.repo.head.commit.hexsha
+                if new_commit != self.last_commit:
+                    self.last_commit = new_commit
+                    return True
             else:
                 print("Already up to date.")
-                return False
+            return False
         except git.GitCommandError as e:
             print(f"Git error: {e}")
             return False
 
     def on_modified(self, event):
         if not event.is_directory and event.src_path.endswith('.py'):
-            print(f"{event.src_path} has changed. Checking for updates and restarting bot...")
+            print(f"{event.src_path} has changed.")
             if self.check_for_updates():
+                print("Updates found. Restarting bot...")
                 self.start_bot()
             else:
-                print("No updates found. Restarting bot with local changes...")
-                self.start_bot()
+                print("No updates found. Changes are local.")
+                # Optionally restart on local changes:
+                # self.start_bot()
 
 if __name__ == "__main__":
     script = 'bot.py'
