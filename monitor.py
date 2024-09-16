@@ -7,6 +7,22 @@ import psutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
+class SingleInstance:
+    def __init__(self, pid_file):
+        self.pid_file = pid_file
+        if os.path.exists(self.pid_file):
+            with open(self.pid_file, 'r') as f:
+                old_pid = int(f.read().strip())
+            if psutil.pid_exists(old_pid):
+                print(f"Another instance (PID: {old_pid}) is already running. Exiting.")
+                sys.exit(1)
+        with open(self.pid_file, 'w') as f:
+            f.write(str(os.getpid()))
+
+    def __del__(self):
+        if os.path.exists(self.pid_file):
+            os.unlink(self.pid_file)
+
 class GitMonitorHandler(FileSystemEventHandler):
     def __init__(self, script, repo_path):
         self.script = script
@@ -20,7 +36,6 @@ class GitMonitorHandler(FileSystemEventHandler):
         if self.process:
             print("Terminating existing bot process...")
             self.terminate_bot()
-        
         print("Starting bot...")
         self.process = subprocess.Popen([sys.executable, self.script])
 
@@ -28,11 +43,10 @@ class GitMonitorHandler(FileSystemEventHandler):
         if self.process:
             try:
                 parent = psutil.Process(self.process.pid)
-                children = parent.children(recursive=True)
-                for child in children:
+                for child in parent.children(recursive=True):
                     child.terminate()
                 parent.terminate()
-                gone, alive = psutil.wait_procs([parent] + children, timeout=5)
+                gone, alive = psutil.wait_procs([parent] + parent.children(recursive=True), timeout=5)
                 for p in alive:
                     p.kill()
             except psutil.NoSuchProcess:
@@ -73,6 +87,9 @@ class GitMonitorHandler(FileSystemEventHandler):
                 print("No updates found. Changes are local.")
 
 if __name__ == "__main__":
+    pid_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'bot_monitor.pid')
+    single_instance = SingleInstance(pid_file)
+    
     script = 'bot.py'
     repo_path = '.'
     event_handler = GitMonitorHandler(script, repo_path)
