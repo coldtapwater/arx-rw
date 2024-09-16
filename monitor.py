@@ -3,6 +3,7 @@ import sys
 import time
 import subprocess
 import git
+import psutil
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -18,10 +19,25 @@ class GitMonitorHandler(FileSystemEventHandler):
     def start_bot(self):
         if self.process:
             print("Terminating existing bot process...")
-            self.process.terminate()
-            self.process.wait()  # Wait for the process to actually terminate
+            self.terminate_bot()
+        
         print("Starting bot...")
         self.process = subprocess.Popen([sys.executable, self.script])
+
+    def terminate_bot(self):
+        if self.process:
+            try:
+                parent = psutil.Process(self.process.pid)
+                children = parent.children(recursive=True)
+                for child in children:
+                    child.terminate()
+                parent.terminate()
+                gone, alive = psutil.wait_procs([parent] + children, timeout=5)
+                for p in alive:
+                    p.kill()
+            except psutil.NoSuchProcess:
+                pass
+            self.process = None
 
     def check_for_updates(self):
         print("Checking for updates...")
@@ -29,6 +45,7 @@ class GitMonitorHandler(FileSystemEventHandler):
         if current_branch.name != 'master':
             print(f"Currently on branch '{current_branch.name}'. Switching to master...")
             self.repo.git.checkout('master')
+        
         try:
             self.repo.remotes.origin.fetch()
             commits_behind = list(self.repo.iter_commits('master..origin/master'))
@@ -54,12 +71,10 @@ class GitMonitorHandler(FileSystemEventHandler):
                 self.start_bot()
             else:
                 print("No updates found. Changes are local.")
-                # Optionally restart on local changes:
-                # self.start_bot()
 
 if __name__ == "__main__":
     script = 'bot.py'
-    repo_path = '.'  # Assumes the script is run from the repository root
+    repo_path = '.'
     event_handler = GitMonitorHandler(script, repo_path)
     observer = Observer()
     observer.schedule(event_handler, path=repo_path, recursive=True)
@@ -67,13 +82,11 @@ if __name__ == "__main__":
 
     try:
         while True:
-            time.sleep(60)  # Check for updates every minute
+            time.sleep(60)
             if event_handler.check_for_updates():
                 event_handler.start_bot()
     except KeyboardInterrupt:
         print("Stopping bot and observer...")
-        if event_handler.process:
-            event_handler.process.terminate()
-            event_handler.process.wait()
+        event_handler.terminate_bot()
         observer.stop()
-    observer.join()
+        observer.join()
