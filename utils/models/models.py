@@ -21,7 +21,7 @@ class Inventory(Model):
     id = fields.IntField(pk=True)
     user = fields.ForeignKeyField('models.User', related_name='inventory_items')
     item_name = fields.CharField(max_length=255)
-    quantity = fields.IntField()
+    quantity = fields.IntField(default=0)
 
     class Meta:
         table = "inventory"
