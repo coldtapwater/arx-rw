@@ -298,14 +298,14 @@ Respond with either 'casual' or 'deep'.
         self.contexts[user_id].append({"role": "assistant", "content": response})
         self.contexts[user_id] = self.contexts[user_id][-10:]  # Keep only last 5 turns
 
-    @commands.command(name='jailbreak2')
+    @commands.command(name='jailbreak')
     @commands.is_owner()
     async def jailbreak(self, ctx, pattern: str):
         await JailbreakPatterns.create(pattern=pattern)
         await self.jailbreak_detector.load_patterns()
         await ctx.send(f"Jailbreak pattern '{pattern}' added to database.")
 
-    @commands.command(name='clear2')
+    @commands.command(name='clear')
     @commands.is_owner()
     async def clear(self, ctx):
         self.model_cache.clear()
