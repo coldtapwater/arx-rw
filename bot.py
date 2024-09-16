@@ -143,7 +143,7 @@ async def info(ctx):
     draw = ImageDraw.Draw(image)
 
     # Load and paste the logo
-    logo = Image.open(r"C:/Users/Jason/Desktop/arx-rw/logo.png")
+    logo = Image.open(r"C:/Users/Jason/Desktop/arx-rw/logo-arx.png")
     logo = logo.resize((500, 500))  # Resize if necessary
     image.paste(logo, (width - 500, 0), logo if logo.mode == 'RGBA' else None)
 
