@@ -86,7 +86,12 @@ async def get_nearby_ranks(user_id: int, range: int = 2):
 async def add_item_to_inventory(user_id: int, item_name: str, quantity: int = 1):
     user, _ = await User.get_or_create(id=user_id)
     inventory_item, created = await Inventory.get_or_create(user=user, item_name=item_name)
-    inventory_item.quantity += quantity
+    
+    if created:
+        inventory_item.quantity = quantity
+    else:
+        inventory_item.quantity += quantity
+    
     await inventory_item.save()
 
 async def get_user_inventory(ctx, user_id: int):
@@ -120,9 +125,18 @@ async def buy_item(ctx, name: str):
         user = await User.get(id=ctx.author.id)
         if user.wallet < item.price:
             return await ctx.send(f"You don't have enough money to buy {name}!")
+        
         user.wallet -= item.price
         await user.save()
-        await add_item_to_inventory(ctx.author.id, name, 1)
+        
+        try:
+            await add_item_to_inventory(ctx.author.id, name, 1)
+        except Exception as e:
+            # If adding to inventory fails, refund the user
+            user.wallet += item.price
+            await user.save()
+            raise Exception(f"Failed to add item to inventory: {str(e)}")
+        
         return await ctx.send(f"You have successfully purchased {name}!")
     except DoesNotExist:
         return await ctx.send(f"{name} is not in the shop!")
