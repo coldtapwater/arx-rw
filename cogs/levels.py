@@ -32,10 +32,12 @@ class Leveling(commands.Cog):
         user = user or ctx.author
         user_level = await levels_db.get_user_level(user.id, ctx.guild.id)
         wallet, bank, gems = await economy_db.get_user_balance(user.id)
-        
         next_level_xp = levels_db.calculate_xp_for_next_level(user_level.level)
         progress = f"{user_level.xp}/{next_level_xp}"
         prestige_badges = "🌟" * user_level.prestige
+        
+        badges = await economy_db.get_user_badges(user.id)
+        badge_display = " ".join([f"{badge.name} x{badge.count}" for badge in badges]) if badges else "No badges"
 
         profile_text = f"""
         ***{user.name}***'s profile {prestige_badges}
@@ -45,6 +47,7 @@ class Leveling(commands.Cog):
         Wallet: {my_emojis.CURRENCY_EMOJI}{wallet} {uc.CURRENCY}
         Bank: {my_emojis.CURRENCY_EMOJI}{bank} {uc.CURRENCY}
         Gems: {my_emojis.GEMS}{gems}
+        Badges: {badge_display}
         """
         await ctx.send(profile_text)
 

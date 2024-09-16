@@ -161,4 +161,34 @@ async def sell_item(ctx, name: str):
 async def get_total_buckaroos():
     users = await User.all()
     return sum(user.wallet + user.bank for user in users)
-# Add more economy-related database functions here
+
+# Add these imports at the top of the file
+from tortoise.exceptions import DoesNotExist
+
+# Add these new functions
+
+async def remove_item_from_inventory(user_id: int, item_name: str, quantity: int = 1):
+    user = await User.get(id=user_id)
+    try:
+        inventory_item = await Inventory.get(user=user, item_name=item_name)
+        if inventory_item.quantity >= quantity:
+            inventory_item.quantity -= quantity
+            if inventory_item.quantity == 0:
+                await inventory_item.delete()
+            else:
+                await inventory_item.save()
+        else:
+            raise ValueError("Not enough items in inventory")
+    except DoesNotExist:
+        raise ValueError("Item not found in inventory")
+
+async def add_badge(user_id: int, badge_name: str):
+    user = await User.get(id=user_id)
+    badge, created = await Badge.get_or_create(user=user, name=badge_name)
+    if not created:
+        badge.count += 1
+        await badge.save()
+
+async def get_user_badges(user_id: int):
+    user = await User.get(id=user_id)
+    return await Badge.filter(user=user).all()

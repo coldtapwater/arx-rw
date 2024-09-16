@@ -125,4 +125,14 @@ class JailbreakPatterns(Model):
 
     class Meta:
         table = "jailbreak_patterns"
+
+class Badge(Model):
+    id = fields.IntField(pk=True)
+    user = fields.ForeignKeyField('models.User', related_name='badges')
+    name = fields.CharField(max_length=100)
+    count = fields.IntField(default=1)
+
+    class Meta:
+        table = "badges"
+        unique_together = ("user", "name")
     
