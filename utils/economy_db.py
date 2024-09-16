@@ -97,10 +97,12 @@ async def add_item_to_inventory(user_id: int, item_name: str, quantity: int = 1)
 async def get_user_inventory(ctx, user_id: int):
     user, _ = await User.get_or_create(id=user_id)
     inventory = await Inventory.filter(user=user).all()
-    embed = discord.Embed(title="Inventory", color=discord.Color.from_str(uc.EMBED_COLOR))
+    message = "inventory for {}:\n".format(user.username)
+
     for item in inventory:
-        embed.add_field(name=item.item_name, value=f"Quantity: {item.quantity}")
-    await ctx.send(embed=embed)
+        message += f"[+]{item.item_name}: x{item.quantity}\n"
+
+    return await ctx.send(message)
 
 async def get_shop_items():
     return await Shop.all()
