@@ -104,33 +104,12 @@ status_messages = [
     ("Watching", "Users type... 👀")
 ]
 
-@tasks.loop(minutes=1)
-async def change_status():
-    try:
-        activity_type, name = random.choice(status_messages)
-        if activity_type == "Playing":
-            activity = discord.Game(large_text=name)
-        elif activity_type == "Listening":
-            activity = discord.Activity(type=discord.ActivityType.listening, details=name)
-        elif activity_type == "Watching":
-            activity = discord.Activity(type=discord.ActivityType.watching, details=name)
-        elif activity_type == "Streaming":
-            activity = discord.Streaming(details=name, url="https://www.twitch.tv/immutablevariable")
-        else:
-            activity = discord.Game(name=name)
-        
-        await bot.change_presence(activity=activity)
-    except discord.errors.HTTPException as e:
-        print(f"HTTP error occurred while changing status: {e}")
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
 
 @bot.event
 async def on_ready():
     logger.info(f'{bot.user} has connected to Discord!')
     logger.info(f'Bot is in {len(bot.guilds)} guilds.')
-    await change_status.start()
-
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game(random.choice(status_messages)[1]))
 @bot.command(name="ping")
 async def ping(ctx):
     await ctx.send(f"Pong! {round(bot.latency * 1000)}ms")
