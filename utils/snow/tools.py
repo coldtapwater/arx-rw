@@ -23,7 +23,6 @@ class WebSearchTool:
     def __init__(self, groq_client: Groq):
         self.api_key = os.getenv('GOOGLE_API_KEY')
         self.search_engine_id = os.getenv('GOOGLE_CSE_ID')
-        self.client = instructor.patch(aiohttp.ClientSession())
         self.groq_client = groq_client
 
     async def execute(self, query: str) -> WebSearchResults:
@@ -34,23 +33,25 @@ class WebSearchTool:
             'num': 5
         }
         url = 'https://www.googleapis.com/customsearch/v1'
-        async with self.client.get(url, params=params) as response:
-            data = await response.json()
-            results = [
-                SearchResult(
-                    title=item['title'],
-                    snippet=item['snippet'],
-                    link=item['link']
-                )
-                for item in data.get('items', [])
-            ]
-            return WebSearchResults(results=results)
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, params=params) as response:
+                data = await response.json()
+                results = [
+                    SearchResult(
+                        title=item['title'],
+                        snippet=item['snippet'],
+                        link=item['link']
+                    )
+                    for item in data.get('items', [])
+                ]
+                return WebSearchResults(results=results)
 
     async def get_html_summary(self, url: str) -> str:
-        async with self.client.get(url) as response:
-            html = await response.text()
-            summary = await summarize_html(html, self.groq_client)
-            return summary
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                html = await response.text()
+                summary = await summarize_html(html, self.groq_client)
+                return summary
 
 class GitHubRepo(BaseModel):
     full_name: str
