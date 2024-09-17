@@ -109,13 +109,13 @@ async def change_status():
     try:
         activity_type, name = random.choice(status_messages)
         if activity_type == "Playing":
-            activity = discord.Game(name=name)
+            activity = discord.Game(large_text=name)
         elif activity_type == "Listening":
-            activity = discord.Activity(type=discord.ActivityType.listening, name=name)
+            activity = discord.Activity(type=discord.ActivityType.listening, details=name)
         elif activity_type == "Watching":
-            activity = discord.Activity(type=discord.ActivityType.watching, name=name)
+            activity = discord.Activity(type=discord.ActivityType.watching, details=name)
         elif activity_type == "Streaming":
-            activity = discord.Streaming(name=name, url="https://www.twitch.tv/immutablevariable")
+            activity = discord.Streaming(details=name, url="https://www.twitch.tv/immutablevariable")
         else:
             activity = discord.Game(name=name)
         

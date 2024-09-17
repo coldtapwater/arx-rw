@@ -5,6 +5,7 @@ import traceback
 import os
 import sys
 import inspect
+import time
 
 print("Loading error handler...")
 logger = logging.getLogger('bot')
@@ -54,7 +55,11 @@ class ErrorHandler:
             await ctx.send("I don't have the required permissions to execute this command.")
             return
         if isinstance(error, commands.CommandOnCooldown):
-            await ctx.send(f"This command is on cooldown. Try again in {error.retry_after:.2f} seconds.")
+            # Calculate the time when the cooldown will end
+            retry_time = int(time.time() + error.retry_after)
+            
+            # Use Discord's timestamp format for a relative time display
+            await ctx.send(f"This command is on cooldown. Try again <t:{retry_time}:R>.")
             return
         if isinstance(error, commands.NoPrivateMessage):
             await ctx.send("This command cannot be used in private messages.")
