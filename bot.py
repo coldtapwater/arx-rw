@@ -95,6 +95,7 @@ async def is_owner(ctx):
 async def on_ready():
     logger.info(f'{bot.user} has connected to Discord!')
     logger.info(f'Bot is in {len(bot.guilds)} guilds.')
+    await bot.change_presence(status=discord.Status.online, activity=discord.Game("r help | Linux 6.8.0-45-generic"))
 
 @bot.command(name="ping")
 async def ping(ctx):
