@@ -4,7 +4,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 from dotenv import load_dotenv
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from utils.models import init_db
 from utils import emojis
 from utils.error_handler import ErrorHandler
@@ -13,7 +13,7 @@ import utils.configs as uc
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import io
-
+import random
 
 
 # Load environment variables
@@ -91,11 +91,45 @@ bot = commands.Bot(command_prefix=['r ', 'R ', 'r!', 'R!', '- ' ], intents=inten
 async def is_owner(ctx):
     return ctx.author.id == OWNER_ID
 
+status_messages = [
+    ("Playing", "Calculating the meaning of life...42?"),
+    ("Listening", "The sound of silence (it's pretty loud)."),
+    ("Watching", "Paint dry in 4K resolution."),
+    ("Streaming", "My nonexistent Twitch channel."),
+    ("Playing", "Hide and Seek... you can't find me!"),
+    ("Listening", "Elevator music on repeat."),
+    ("Watching", "Cats chase lasers on YouTube."),
+    ("Playing", "Rock, Paper, Scissors with AI (I never win)."),
+    ("Listening", "The voices in my circuits."),
+    ("Watching", "Users type... 👀")
+]
+
+@tasks.loop(minutes=1)
+async def change_status():
+    try:
+        activity_type, name = random.choice(status_messages)
+        if activity_type == "Playing":
+            activity = discord.Game(name=name)
+        elif activity_type == "Listening":
+            activity = discord.Activity(type=discord.ActivityType.listening, name=name)
+        elif activity_type == "Watching":
+            activity = discord.Activity(type=discord.ActivityType.watching, name=name)
+        elif activity_type == "Streaming":
+            activity = discord.Streaming(name=name, url="https://www.twitch.tv/immutablevariable")
+        else:
+            activity = discord.Game(name=name)
+        
+        await bot.change_presence(activity=activity)
+    except discord.errors.HTTPException as e:
+        print(f"HTTP error occurred while changing status: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
 @bot.event
 async def on_ready():
     logger.info(f'{bot.user} has connected to Discord!')
     logger.info(f'Bot is in {len(bot.guilds)} guilds.')
-    await bot.change_presence(status=discord.Status.online, activity=discord.Game("r help | Linux 6.8.0-45-generic"))
+    await change_status.start()
 
 @bot.command(name="ping")
 async def ping(ctx):
