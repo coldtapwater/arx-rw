@@ -208,21 +208,6 @@ class RequestQueue:
     def start_processing(self, process_func):
         asyncio.create_task(self.process(process_func))
 
-class LlamaGuard:
-    def __init__(self, groq_client: AsyncGroq, model: str):
-        self.groq_client = groq_client
-        self.model = model
-
-    async def check_message(self, content: str) -> bool:
-        response = await self.groq_client.chat.completions.create(
-            model=self.model,
-            messages=[
-                {"role": "user", "content": content}
-            ]
-        )
-        result = response.choices[0].message.content.lower()
-        return result == "safe"
-
 class SnowEngine:
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -232,16 +217,14 @@ class SnowEngine:
         self.mixture_of_agents = MixtureOfAgents(self.groq_client, self.config)
         self.context_manager = SimpleContextManager()
         self.request_queue = RequestQueue()
-        self.llama_guard = LlamaGuard(self.groq_client, self.config['llama_guard_model'])
         self.conversation_manager = ConversationManager()
 
     async def start(self):
         self.request_queue.start_processing(self.process_message)
 
     async def process_message(self, message: discord.Message) -> str:
-        is_safe = await self.llama_guard.check_message(message.content)
-        if not is_safe:
-            return "I'm sorry, but I can't respond to that kind of message."
+        if message.author.bot:
+            return
 
         user_id = message.author.id
         current_conv_type = self.conversation_manager.get_conversation_type(user_id)

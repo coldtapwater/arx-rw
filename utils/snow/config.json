@@ -1,5 +1,4 @@
 {
-    "llama_guard_model": "llama-guard-3-8b",
     "vision_model": "llava-v1.5-7b-4096-preview",
     "advanced_model": "llama-3.1-70b-versatile",
     "tool_use_model_1": "llama3-groq-70b-8192-tool-use-preview",
