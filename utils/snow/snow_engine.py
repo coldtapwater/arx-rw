@@ -16,11 +16,11 @@ class ConversationType(Enum):
 
 class ConversationManager:
     def __init__(self, casual_timeout: int = 300, deep_timeout: int = 600):
-        self.conversations: Dict[int, Dict] = {}
+        self.conversations = {}
         self.casual_timeout = casual_timeout  # 5 minutes
         self.deep_timeout = deep_timeout  # 10 minutes
 
-    def start_conversation(self, user_id: int, conv_type: ConversationType):
+    def start_conversation(self, user_id: int, conv_type: str):
         self.conversations[user_id] = {
             "type": conv_type,
             "last_interaction": time.time()
@@ -30,21 +30,21 @@ class ConversationManager:
         if user_id in self.conversations:
             self.conversations[user_id]["last_interaction"] = time.time()
 
-    def get_conversation_type(self, user_id: int) -> ConversationType:
+    def get_conversation_type(self, user_id: int) -> str:
         if user_id not in self.conversations:
             return None
         
         conv = self.conversations[user_id]
         elapsed_time = time.time() - conv["last_interaction"]
         
-        if (conv["type"] == ConversationType.CASUAL and elapsed_time > self.casual_timeout) or \
-           (conv["type"] == ConversationType.DEEP and elapsed_time > self.deep_timeout):
+        if (conv["type"] == ConversationType.CASUAL.value and elapsed_time > self.casual_timeout) or \
+           (conv["type"] == ConversationType.DEEP.value and elapsed_time > self.deep_timeout):
             del self.conversations[user_id]
             return None
 
         return conv["type"]
 
-    def force_conversation_type(self, user_id: int, conv_type: ConversationType):
+    def force_conversation_type(self, user_id: int, conv_type: str):
         self.start_conversation(user_id, conv_type)
 
 class MixtureOfAgents:
@@ -96,28 +96,28 @@ class SimpleContextManager:
         self.contexts = {}
         self.max_contexts = max_contexts
 
-    def add_context(self, user_id: int, query: str, response: str, conv_type: ConversationType):
+    def add_context(self, user_id: int, query: str, response: str, conv_type: str):
         if user_id not in self.contexts:
             self.contexts[user_id] = []
         
         self.contexts[user_id].append({
             "role": "user",
             "content": query,
-            "type": conv_type.value
+            "type": conv_type
         })
         self.contexts[user_id].append({
             "role": "assistant",
             "content": response,
-            "type": conv_type.value
+            "type": conv_type
         })
         
         self.contexts[user_id] = self.contexts[user_id][-self.max_contexts:]
 
-    def get_context(self, user_id: int, k: int = 5, conv_type: ConversationType = None) -> List[Dict[str, str]]:
+    def get_context(self, user_id: int, k: int = 5, conv_type: str = None) -> List[Dict[str, str]]:
         user_context = self.contexts.get(user_id, [])
         
         if conv_type:
-            filtered_context = [msg for msg in user_context if msg["type"] == conv_type.value]
+            filtered_context = [msg for msg in user_context if msg["type"] == conv_type]
         else:
             filtered_context = user_context
 
@@ -185,20 +185,20 @@ class SnowEngine:
 
         if current_conv_type is None:
             query_type = await self.route_query(message.content)
-            conv_type = ConversationType.CASUAL if query_type == "casual" else ConversationType.DEEP
+            conv_type = ConversationType.CASUAL.value if query_type == "casual" else ConversationType.DEEP.value
             self.conversation_manager.start_conversation(user_id, conv_type)
         else:
             conv_type = current_conv_type
 
-        context = self.context_manager.get_context(user_id)
+        context = self.context_manager.get_context(user_id, k=5, conv_type=conv_type)
 
-        if conv_type == ConversationType.CASUAL:
+        if conv_type == ConversationType.CASUAL.value:
             response = await self.process_casual_query(message, context)
         else:
             response = await self.process_deep_query(message, context)
 
         self.conversation_manager.update_conversation(user_id)
-        self.context_manager.add_context(user_id, message.content, response, conv_type.value)
+        self.context_manager.add_context(user_id, message.content, response, conv_type)
         return response
 
     async def route_query(self, query: str) -> str:
@@ -272,10 +272,10 @@ class SnowEngine:
         await JailbreakPatterns.get_or_create(pattern=pattern)
 
     async def force_conversation_type(self, user_id: int, conv_type: str):
-        if conv_type.lower() == "casual":
-            self.conversation_manager.force_conversation_type(user_id, ConversationType.CASUAL)
-        elif conv_type.lower() == "deep":
-            self.conversation_manager.force_conversation_type(user_id, ConversationType.DEEP)
+        if conv_type in [ConversationType.CASUAL.value, ConversationType.DEEP.value]:
+            self.conversation_manager.force_conversation_type(user_id, conv_type)
+        else:
+            raise ValueError("Invalid conversation type")
         
 
     async def clear_caches(self):
