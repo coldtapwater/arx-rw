@@ -144,7 +144,7 @@ class SnowEngine:
                     'Casual' queries include:
                     - Greetings and small talk (e.g., "Hi there", "How are you?")
                     - Simple questions with straightforward answers
-                    - Jokes or playful interactions
+                    - Jokes or playful interactions like games (20-questions)
                     - Brief, everyday conversations
                     - Questions about things/events that do not require deep knowledge
                     - "Easy" questions that can be answered without additional context
@@ -175,7 +175,7 @@ class SnowEngine:
                 model="llama-3.1-8b-instant",  # Using a smaller, faster model for casual queries
                 messages=[
                     {"role": "system", "content": self.config['casual_prompt']},
-                    *context[-10:],  # Only use the last turn of conversation for context
+                    *context[-20:],  # Only use the last turn of conversation for context
                     {"role": "user", "content": message.content}
                 ],
                 max_tokens=50  # Limit the response length for casual queries
