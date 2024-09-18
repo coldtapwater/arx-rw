@@ -175,7 +175,7 @@ class SnowEngine:
                 model="llama-3.1-8b-instant",  # Using a smaller, faster model for casual queries
                 messages=[
                     {"role": "system", "content": self.config['casual_prompt']},
-                    *context[-2:],  # Only use the last turn of conversation for context
+                    *context[-10:],  # Only use the last turn of conversation for context
                     {"role": "user", "content": message.content}
                 ],
                 max_tokens=50  # Limit the response length for casual queries
