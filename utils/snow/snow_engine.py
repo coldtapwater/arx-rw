@@ -8,6 +8,44 @@ from utils.snow.config import load_config
 from utils.models.models import JailbreakPatterns
 import os
 from datetime import time, timedelta, datetime
+from enum import Enum
+import time
+class ConversationType(Enum):
+    CASUAL = "casual"
+    DEEP = "deep"
+
+class ConversationManager:
+    def __init__(self, casual_timeout: int = 300, deep_timeout: int = 600):
+        self.conversations: Dict[int, Dict] = {}
+        self.casual_timeout = casual_timeout  # 5 minutes
+        self.deep_timeout = deep_timeout  # 10 minutes
+
+    def start_conversation(self, user_id: int, conv_type: ConversationType):
+        self.conversations[user_id] = {
+            "type": conv_type,
+            "last_interaction": time.time()
+        }
+
+    def update_conversation(self, user_id: int):
+        if user_id in self.conversations:
+            self.conversations[user_id]["last_interaction"] = time.time()
+
+    def get_conversation_type(self, user_id: int) -> ConversationType:
+        if user_id not in self.conversations:
+            return None
+        
+        conv = self.conversations[user_id]
+        elapsed_time = time.time() - conv["last_interaction"]
+        
+        if (conv["type"] == ConversationType.CASUAL and elapsed_time > self.casual_timeout) or \
+           (conv["type"] == ConversationType.DEEP and elapsed_time > self.deep_timeout):
+            del self.conversations[user_id]
+            return None
+
+        return conv["type"]
+
+    def force_conversation_type(self, user_id: int, conv_type: ConversationType):
+        self.start_conversation(user_id, conv_type)
 
 class MixtureOfAgents:
     def __init__(self, groq_client: AsyncGroq, config: Dict[str, Any]):
@@ -111,28 +149,36 @@ class SnowEngine:
         self.context_manager = SimpleContextManager()
         self.request_queue = RequestQueue()
         self.llama_guard = LlamaGuard(self.groq_client, self.config['llama_guard_model'])
+        self.conversation_manager = ConversationManager()
 
     async def start(self):
         self.request_queue.start_processing(self.process_message)
 
     async def process_message(self, message: discord.Message) -> str:
-        try:
-            is_safe = await self.llama_guard.check_message(message.content)
-            if not is_safe:
-                return "I'm sorry, but I can't respond to that kind of message."
+        is_safe = await self.llama_guard.check_message(message.content)
+        if not is_safe:
+            return "I'm sorry, but I can't respond to that kind of message."
 
+        user_id = message.author.id
+        current_conv_type = self.conversation_manager.get_conversation_type(user_id)
+
+        if current_conv_type is None:
             query_type = await self.route_query(message.content)
-            context = self.context_manager.get_context(message.author.id)
+            conv_type = ConversationType.CASUAL if query_type == "casual" else ConversationType.DEEP
+            self.conversation_manager.start_conversation(user_id, conv_type)
+        else:
+            conv_type = current_conv_type
 
-            if query_type == "casual":
-                response = await self.process_casual_query(message, context)
-            else:
-                response = await self.process_deep_query(message, context)
+        context = self.context_manager.get_context(user_id)
 
-            self.context_manager.add_context(message.author.id, message.content, response)
-            return response
-        except Exception as e:
-            return f"Something went wrong: {e}"
+        if conv_type == ConversationType.CASUAL:
+            response = await self.process_casual_query(message, context)
+        else:
+            response = await self.process_deep_query(message, context)
+
+        self.conversation_manager.update_conversation(user_id)
+        self.context_manager.add_context(user_id, message.content, response, conv_type.value)
+        return response
 
     async def route_query(self, query: str) -> str:
         try:
@@ -201,6 +247,12 @@ class SnowEngine:
 
     async def add_jailbreak_pattern(self, pattern: str):
         await JailbreakPatterns.get_or_create(pattern=pattern)
+
+    async def force_conversation_type(self, user_id: int, conv_type: str):
+        if conv_type.lower() == "casual":
+            self.conversation_manager.force_conversation_type(user_id, ConversationType.CASUAL)
+        elif conv_type.lower() == "deep":
+            self.conversation_manager.force_conversation_type(user_id, ConversationType.DEEP)
         
 
     async def clear_caches(self):

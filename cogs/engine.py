@@ -110,5 +110,14 @@ class SnowCog(commands.Cog):
         await self.snow_engine.clear_caches()
         await ctx.send("Caches and contexts cleared.")
 
+    @commands.command(name="forcetype")
+    async def force_conversation_type(self, ctx: commands.Context, conv_type: str):
+        if conv_type.lower() not in ["casual", "deep"]:
+            await ctx.send("Invalid conversation type. Please use 'casual' or 'deep'.")
+            return
+        
+        await self.snow_engine.force_conversation_type(ctx.author.id, conv_type.lower())
+        await ctx.send(f"Conversation type forced to {conv_type.lower()}.")
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(SnowCog(bot))
