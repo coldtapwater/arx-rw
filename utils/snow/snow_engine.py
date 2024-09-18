@@ -146,6 +146,7 @@ class SnowEngine:
                     - Simple questions with straightforward answers
                     - Jokes or playful interactions like games (20-questions)
                     - Brief, everyday conversations
+                    - Follow-up questions in casual conversations
                     - Questions about things/events that do not require deep knowledge
                     - "Easy" questions that can be answered without additional context
                     - Some historical events if the user is asking for names or a brief explanantion
