@@ -25,7 +25,7 @@ DB_HOST = os.getenv('DB_HOST', 'localhost')
 DB_PORT = os.getenv('DB_PORT', '5432')
 
 OWNER_ID = int(os.getenv('OWNER_ID'))
-version = '2.0.3'
+version = '2.2.1'
 
 # Set up logging
 def setup_logging():
