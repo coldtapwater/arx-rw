@@ -59,8 +59,9 @@ class MixtureOfAgents:
 
         # Use tools
         tool_results = await self.use_tools(query, image_url)
-        tool_context = self.format_tool_results(tool_results)
-        messages.append({"role": "system", "content": f"Tool results: {tool_context}"})
+        if tool_results:
+            tool_context = self.format_tool_results(tool_results)
+            messages.append({"role": "system", "content": f"Tool results: {tool_context}"})
 
         if image_url:
             messages.append({"role": "user", "content": [
@@ -79,14 +80,25 @@ class MixtureOfAgents:
     async def use_tools(self, query: str, image_url: str = None) -> Dict[str, Any]:
         results = {}
         for tool in self.tools:
-            if isinstance(tool, WebSearchTool):
-                results['web_search'] = await tool.execute(query)
-            elif isinstance(tool, GitHubSearchTool):
-                results['github_search'] = await tool.execute(query)
-            elif isinstance(tool, ImageRecognitionTool) and image_url:
-                results['image_analysis'] = await tool.execute(image_url)
-            elif isinstance(tool, LaTeXRenderingTool) and '$$' in query:
-                results['latex_render'] = await tool.execute(query)
+            try:
+                if isinstance(tool, WebSearchTool):
+                    web_results = await tool.execute(query)
+                    if web_results and web_results.results:
+                        results['web_search'] = web_results
+                elif isinstance(tool, GitHubSearchTool):
+                    github_results = await tool.execute(query)
+                    if github_results and github_results.repos:
+                        results['github_search'] = github_results
+                elif isinstance(tool, ImageRecognitionTool) and image_url:
+                    image_result = await tool.execute(image_url)
+                    if image_result and image_result.description:
+                        results['image_analysis'] = image_result
+                elif isinstance(tool, LaTeXRenderingTool) and '\\' in query:
+                    latex_result = await tool.execute(query)
+                    if latex_result:
+                        results['latex_render'] = latex_result
+            except Exception as e:
+                print(f"Error using tool {tool.__class__.__name__}: {str(e)}")
         return results
 
     def format_tool_results(self, results: Dict[str, Any]) -> str:
@@ -110,7 +122,7 @@ class MixtureOfAgents:
         if 'latex_render' in results:
             formatted.append("LaTeX rendering available.")
         
-        return "\n".join(formatted)
+        return "\n".join(formatted) if formatted else "No tool results available."
 
     async def reflect(self, query: str, initial_response: str, context: List[Dict[str, str]]) -> str:
         reflection_prompt = f"Reflect on the following query and initial response:\nQuery: {query}\nInitial Response: {initial_response}\nWhat aspects of the response could be improved or expanded upon?"
@@ -297,8 +309,14 @@ class SnowEngine:
 
     async def process_deep_query(self, message: discord.Message, context: List[Dict[str, str]]) -> str:
         try:
+            image_url = None
+            if message.attachments:
+                for attachment in message.attachments:
+                    if attachment.content_type.startswith('image/'):
+                        image_url = attachment.url
+                        break
             context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in context]
-            initial_response = await self.mixture_of_agents.process_query(message.content, context_messages)
+            initial_response = await self.mixture_of_agents.process_query(message.content, context_messages, image_url)
             final_response = await self.mixture_of_agents.reflect(message.content, initial_response, context_messages)
             return self.format_deep_response(final_response)
         except Exception as e:
