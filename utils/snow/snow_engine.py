@@ -1,7 +1,7 @@
 import asyncio
 import discord
 from discord.ext import commands
-from groq import Groq
+from groq import AsyncGroq
 from typing import List, Dict, Any
 from utils.snow.tools import get_all_tools
 from utils.snow.config import load_config
@@ -9,7 +9,7 @@ from utils.models.models import JailbreakPatterns
 import os
 
 class MixtureOfAgents:
-    def __init__(self, groq_client: Groq, config: Dict[str, Any]):
+    def __init__(self, groq_client: AsyncGroq, config: Dict[str, Any]):
         self.groq_client = groq_client
         self.config = config
 
@@ -86,7 +86,7 @@ class RequestQueue:
         asyncio.create_task(self.process(process_func))
 
 class LlamaGuard:
-    def __init__(self, groq_client: Groq, model: str):
+    def __init__(self, groq_client: AsyncGroq, model: str):
         self.groq_client = groq_client
         self.model = model
 
@@ -104,7 +104,7 @@ class SnowEngine:
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.config = load_config()
-        self.groq_client = Groq(api_key=os.getenv('GROQ_API_KEY'))
+        self.groq_client = AsyncGroq(api_key=os.getenv('GROQ_API_KEY'))
         self.tools = get_all_tools(self.groq_client)
         self.mixture_of_agents = MixtureOfAgents(self.groq_client, self.config)
         self.context_manager = SimpleContextManager()

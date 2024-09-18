@@ -9,7 +9,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 import instructor
-from groq import Groq
+from groq import AsyncGroq
 
 class SearchResult(BaseModel):
     title: str
@@ -20,7 +20,7 @@ class WebSearchResults(BaseModel):
     results: List[SearchResult]
 
 class WebSearchTool:
-    def __init__(self, groq_client: Groq):
+    def __init__(self, groq_client: AsyncGroq):
         self.api_key = os.getenv('GOOGLE_API_KEY')
         self.search_engine_id = os.getenv('GOOGLE_CSE_ID')
         self.groq_client = groq_client
@@ -83,7 +83,7 @@ class ImageAnalysisResult(BaseModel):
     description: str
 
 class ImageRecognitionTool:
-    def __init__(self, groq_client: Groq):
+    def __init__(self, groq_client: AsyncGroq):
         self.groq_client = groq_client
         self.model = "llava-v1.5-7b-4096-preview"
 
@@ -134,7 +134,7 @@ class LaTeXRenderingTool:
                 else:
                     raise Exception(f"Failed to render LaTeX. Status: {response.status}")
 
-async def summarize_html(html: str, groq_client: Groq) -> str:
+async def summarize_html(html: str, groq_client: AsyncGroq) -> str:
     text = html.replace('<', ' <').replace('>', '> ').strip()
     
     response = await groq_client.chat.completions.create(
@@ -147,7 +147,7 @@ async def summarize_html(html: str, groq_client: Groq) -> str:
     )
     return response.choices[0].message.content
 
-def get_all_tools(groq_client: Groq):
+def get_all_tools(groq_client: AsyncGroq):
     return [
         WebSearchTool(groq_client),
         GitHubSearchTool(),
