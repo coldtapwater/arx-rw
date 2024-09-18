@@ -154,7 +154,8 @@ class MixtureOfAgents:
         
         reflection_response = await self.groq_client.chat.completions.create(
             model=self.config['advanced_model'],
-            messages=messages
+            messages=messages,
+            max_tokens=5000
         )
         reflection = reflection_response.choices[0].message.content
 
@@ -165,7 +166,8 @@ class MixtureOfAgents:
         
         improved_response = await self.groq_client.chat.completions.create(
             model=self.config['relation_model'],
-            messages=messages
+            messages=messages,
+            max_tokens=4500
         )
         return improved_response.choices[0].message.content
 
