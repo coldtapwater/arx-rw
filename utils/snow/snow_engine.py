@@ -3,7 +3,7 @@ import discord
 from discord.ext import commands
 from groq import AsyncGroq
 from typing import List, Dict, Any
-from utils.snow.tools import get_all_tools
+from utils.snow.tools import get_all_tools, WebSearchTool, GitHubSearchTool, ImageRecognitionTool, LaTeXRenderingTool
 from utils.snow.config import load_config
 from utils.models.models import JailbreakPatterns
 import os
@@ -51,11 +51,17 @@ class MixtureOfAgents:
     def __init__(self, groq_client: AsyncGroq, config: Dict[str, Any]):
         self.groq_client = groq_client
         self.config = config
+        self.tools = get_all_tools(groq_client)
 
     async def process_query(self, query: str, context: List[Dict[str, str]], image_url: str = None) -> str:
-        messages = [{"role": "system", "content": f"{self.config['system_prompt']} *Note: todays date is {datetime.now().date()}*"}]
+        messages = [{"role": "system", "content": f"{self.config['system_prompt']} *Note: today's date is {datetime.now().date()}*"}]
         messages.extend(context)
-        
+
+        # Use tools
+        tool_results = await self.use_tools(query, image_url)
+        tool_context = self.format_tool_results(tool_results)
+        messages.append({"role": "system", "content": f"Tool results: {tool_context}"})
+
         if image_url:
             messages.append({"role": "user", "content": [
                 {"type": "text", "text": query},
@@ -69,6 +75,42 @@ class MixtureOfAgents:
             messages=messages
         )
         return response.choices[0].message.content
+
+    async def use_tools(self, query: str, image_url: str = None) -> Dict[str, Any]:
+        results = {}
+        for tool in self.tools:
+            if isinstance(tool, WebSearchTool):
+                results['web_search'] = await tool.execute(query)
+            elif isinstance(tool, GitHubSearchTool):
+                results['github_search'] = await tool.execute(query)
+            elif isinstance(tool, ImageRecognitionTool) and image_url:
+                results['image_analysis'] = await tool.execute(image_url)
+            elif isinstance(tool, LaTeXRenderingTool) and '$$' in query:
+                results['latex_render'] = await tool.execute(query)
+        return results
+
+    def format_tool_results(self, results: Dict[str, Any]) -> str:
+        formatted = []
+        if 'web_search' in results:
+            web_results = results['web_search']
+            formatted.append("Web Search Results:")
+            for result in web_results.results[:3]:  # Limit to top 3 results
+                formatted.append(f"- {result.title}: {result.snippet}")
+        
+        if 'github_search' in results:
+            github_results = results['github_search']
+            formatted.append("GitHub Search Results:")
+            for repo in github_results.repos[:3]:  # Limit to top 3 results
+                formatted.append(f"- {repo.full_name}: {repo.description}")
+        
+        if 'image_analysis' in results:
+            image_result = results['image_analysis']
+            formatted.append(f"Image Analysis: {image_result.description}")
+        
+        if 'latex_render' in results:
+            formatted.append("LaTeX rendering available.")
+        
+        return "\n".join(formatted)
 
     async def reflect(self, query: str, initial_response: str, context: List[Dict[str, str]]) -> str:
         reflection_prompt = f"Reflect on the following query and initial response:\nQuery: {query}\nInitial Response: {initial_response}\nWhat aspects of the response could be improved or expanded upon?"
