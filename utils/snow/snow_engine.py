@@ -7,6 +7,7 @@ from utils.snow.tools import get_all_tools
 from utils.snow.config import load_config
 from utils.models.models import JailbreakPatterns
 import os
+from datetime import time, timedelta, datetime
 
 class MixtureOfAgents:
     def __init__(self, groq_client: AsyncGroq, config: Dict[str, Any]):
@@ -14,7 +15,7 @@ class MixtureOfAgents:
         self.config = config
 
     async def process_query(self, query: str, context: List[Dict[str, str]], image_url: str = None) -> str:
-        messages = [{"role": "system", "content": self.config['system_prompt']}]
+        messages = [{"role": "system", "content": f"{self.config['system_prompt']} *Note: todays date is {datetime.now().date()}*"}]
         messages.extend(context)
         
         if image_url:
@@ -145,6 +146,8 @@ class SnowEngine:
                     - Simple questions with straightforward answers
                     - Jokes or playful interactions
                     - Brief, everyday conversations
+                    - Questions about things/events that do not require deep knowledge
+                    - "Easy" questions that can be answered without additional context
 
                     'Deep' queries include:
                     - Requests for detailed explanations or analysis
