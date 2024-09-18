@@ -65,7 +65,6 @@ class GitHubSearchResults(BaseModel):
 class GitHubSearchTool:
     def __init__(self):
         self.github = Github(os.getenv('GITHUB_TOKEN'))
-        self.client = instructor.patch(aiohttp.ClientSession())
 
     async def execute(self, query: str) -> GitHubSearchResults:
         repos = self.github.search_repositories(query, 'stars', 'desc')
