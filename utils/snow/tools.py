@@ -88,35 +88,27 @@ class ImageRecognitionTool:
         self.model = "llava-v1.5-7b-4096-preview"
 
     async def execute(self, image_url: str) -> ImageAnalysisResult:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(image_url) as response:
-                image_data = await response.read()
-            
-            encoded_image = base64.b64encode(image_data).decode('utf-8')
-            
-            response = await self.groq_client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/jpeg;base64,{encoded_image}"
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": "Describe this image in detail."
-                            }
-                        ]
-                    }
-                ],
-                max_tokens=300
-            )
-            
-            return ImageAnalysisResult(description=response.choices[0].message.content)
+        response = await self.groq_client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": image_url}
+                        },
+                        {
+                            "type": "text",
+                            "text": "Describe this image in detail."
+                        }
+                    ]
+                }
+            ],
+            max_tokens=300
+        )
+        
+        return ImageAnalysisResult(description=response.choices[0].message.content)
 
 class LaTeXRenderingTool:
     def __init__(self):

@@ -54,34 +54,39 @@ class MixtureOfAgents:
         self.tools = get_all_tools(groq_client)
 
     async def process_query(self, query: str, context: List[Dict[str, str]], image_url: str = None) -> str:
-        messages = [{"role": "system", "content": f"{self.config['system_prompt']} *Note: today's date is {datetime.now().date()}*"}]
-        messages.extend(context)
-
         # Use tools
         tool_results = await self.use_tools(query, image_url)
-        if tool_results:
-            tool_context = self.format_tool_results(tool_results)
-            messages.append({"role": "system", "content": f"Tool results: {tool_context}"})
+        tool_context = self.format_tool_results(tool_results) if tool_results else ""
+
+        # Prepare the system message
+        system_message = f"{self.config['system_prompt']} *Note: today's date is {datetime.now().date()}*\n\n"
+        if tool_context:
+            system_message += f"Tool results: {tool_context}\n\n"
+
+        # Prepare the context
+        context_str = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in context[-5:]])  # Limit to last 5 messages
+
+        # Consolidate all inputs into a single user message
+        user_message = f"System: {system_message}\n\nContext: {context_str}\n\nUser query: {query}"
+
+        messages = [
+            {"role": "user", "content": user_message}
+        ]
 
         if image_url:
-            messages.append({
-                "role": "user",
-                "content": [
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": image_url}
-                    },
-                    {
-                        "type": "text",
-                        "text": query
-                    }
-                ]
-            })
-        else:
-            messages.append({"role": "user", "content": query})
+            messages[0]["content"] = [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": image_url}
+                },
+                {
+                    "type": "text",
+                    "text": user_message
+                }
+            ]
 
         response = await self.groq_client.chat.completions.create(
-            model=self.config['advanced_model'] if not image_url else "llava-v1.5-7b-4096-preview",
+            model="llava-v1.5-7b-4096-preview" if image_url else self.config['advanced_model'],
             messages=messages
         )
         return response.choices[0].message.content
