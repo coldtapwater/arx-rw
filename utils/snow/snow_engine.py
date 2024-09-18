@@ -96,15 +96,36 @@ class SimpleContextManager:
         self.contexts = {}
         self.max_contexts = max_contexts
 
-    def add_context(self, user_id: int, query: str, response: str):
+    def add_context(self, user_id: int, query: str, response: str, conv_type: ConversationType):
         if user_id not in self.contexts:
             self.contexts[user_id] = []
-        self.contexts[user_id].append({"role": "user", "content": query})
-        self.contexts[user_id].append({"role": "assistant", "content": response})
+        
+        self.contexts[user_id].append({
+            "role": "user",
+            "content": query,
+            "type": conv_type.value
+        })
+        self.contexts[user_id].append({
+            "role": "assistant",
+            "content": response,
+            "type": conv_type.value
+        })
+        
         self.contexts[user_id] = self.contexts[user_id][-self.max_contexts:]
 
-    def get_context(self, user_id: int, k: int = 5) -> List[Dict[str, str]]:
-        return self.contexts.get(user_id, [])[-k*2:]
+    def get_context(self, user_id: int, k: int = 5, conv_type: ConversationType = None) -> List[Dict[str, str]]:
+        user_context = self.contexts.get(user_id, [])
+        
+        if conv_type:
+            filtered_context = [msg for msg in user_context if msg["type"] == conv_type.value]
+        else:
+            filtered_context = user_context
+
+        return filtered_context[-k*2:]
+
+    def clear_context(self, user_id: int):
+        if user_id in self.contexts:
+            del self.contexts[user_id]
 
 class RequestQueue:
     def __init__(self, max_concurrent: int = 1):
