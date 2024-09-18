@@ -139,7 +139,7 @@ class SnowEngine:
             response = await self.groq_client.chat.completions.create(
                 model="gemma-7b-it",
                 messages=[
-                    {"role": "system", "content": """You are a query classifier. Your task is to categorize incoming queries as either 'casual' or 'deep'.
+                    {"role": "system", "content": f"""You are a query classifier. Your task is to categorize incoming queries as either 'casual' or 'deep'.
 
                     'Casual' queries include:
                     - Greetings and small talk (e.g., "Hi there", "How are you?")
@@ -148,12 +148,17 @@ class SnowEngine:
                     - Brief, everyday conversations
                     - Questions about things/events that do not require deep knowledge
                     - "Easy" questions that can be answered without additional context
+                    - Some historical events if the user is asking for names or a brief explanantion
+                    - Questions about basic current events like todays date: {datetime.now().date()}
+                    For example a query like: "Who is the CEO of Apple?" would be categorized as 'casual' since it doesnt really require deep knowledge. Another example would be: "Who is the president of USA?" would be categorized as 'casual' since it doesnt require deep knowledge, and rather relies on your current knowledge.
 
                     'Deep' queries include:
                     - Requests for detailed explanations or analysis
                     - Complex questions requiring research or in-depth knowledge
                     - Philosophical or abstract topics
                     - Multi-step problems or scenarios
+
+                    For example a query like: "What is the meaning of life?" would be categorized as 'deep' since it requires deep knowledge like reasoning, planning, and analysis. Another example would be: "What historical firgure is best known for the laws of Physics" would be categorized as 'deep' since it requires deep knowledge like logic, potential tool calls, and expansion of the explanation.
 
                     Respond with ONLY 'casual' or 'deep' based on the query."""},
                     {"role": "user", "content": f"Query: {query}\nIs this query asking for in-depth information, analysis, or research? Or is it a casual conversation, joke, or simple question?\nRespond with either 'casual' or 'deep'."}
