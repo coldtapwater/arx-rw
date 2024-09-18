@@ -66,28 +66,38 @@ class MixtureOfAgents:
         # Prepare the context
         context_str = "\n".join([f"{msg['role'].capitalize()}: {msg['content']}" for msg in context[-5:]])  # Limit to last 5 messages
 
-        # Consolidate all inputs into a single user message
-        user_message = f"System: {system_message}\n\nContext: {context_str}\n\nUser query: {query}"
-
-        messages = [
-            {"role": "user", "content": user_message}
-        ]
-
         if image_url:
-            messages[0]["content"] = [
+            image_prompt = """
+            An image has been provided along with this message. 
+            Analyze the image carefully and incorporate relevant details into your response. 
+            If the user's query is about the image, focus on answering their question using the image content.
+            If the query isn't directly about the image, still consider the image as context for your response.
+            """
+            user_message = f"{image_prompt}\n\nSystem: {system_message}\n\nContext: {context_str}\n\nUser query: {query}"
+            
+            messages = [
                 {
-                    "type": "image_url",
-                    "image_url": {"url": image_url}
-                },
-                {
-                    "type": "text",
-                    "text": user_message
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": image_url}
+                        },
+                        {
+                            "type": "text",
+                            "text": user_message
+                        }
+                    ]
                 }
             ]
+        else:
+            user_message = f"System: {system_message}\n\nContext: {context_str}\n\nUser query: {query}"
+            messages = [{"role": "user", "content": user_message}]
 
         response = await self.groq_client.chat.completions.create(
             model="llava-v1.5-7b-4096-preview" if image_url else self.config['advanced_model'],
-            messages=messages
+            messages=messages,
+            max_tokens=1000  # Increased token limit for more detailed responses
         )
         return response.choices[0].message.content
 

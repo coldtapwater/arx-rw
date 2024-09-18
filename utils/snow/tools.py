@@ -88,6 +88,19 @@ class ImageRecognitionTool:
         self.model = "llava-v1.5-7b-4096-preview"
 
     async def execute(self, image_url: str) -> ImageAnalysisResult:
+        prompt = """
+        Analyze the image in detail. Follow these steps:
+        1. Describe the main subject(s) of the image.
+        2. List all objects you can see in the image.
+        3. Describe the colors present in the image.
+        4. Describe the setting or background.
+        5. Note any text visible in the image.
+        6. Describe any actions or interactions happening in the image.
+        7. Mention the overall mood or atmosphere of the image.
+        
+        Be specific and accurate. If you're unsure about any detail, say so rather than guessing.
+        """
+
         response = await self.groq_client.chat.completions.create(
             model=self.model,
             messages=[
@@ -100,12 +113,12 @@ class ImageRecognitionTool:
                         },
                         {
                             "type": "text",
-                            "text": "Describe this image in detail."
+                            "text": prompt
                         }
                     ]
                 }
             ],
-            max_tokens=300
+            max_tokens=500
         )
         
         return ImageAnalysisResult(description=response.choices[0].message.content)
