@@ -64,15 +64,24 @@ class MixtureOfAgents:
             messages.append({"role": "system", "content": f"Tool results: {tool_context}"})
 
         if image_url:
-            messages.append({"role": "user", "content": [
-                {"type": "text", "text": query},
-                {"type": "image_url", "image_url": {"url": image_url}}
-            ]})
+            messages.append({
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_url}
+                    },
+                    {
+                        "type": "text",
+                        "text": query
+                    }
+                ]
+            })
         else:
             messages.append({"role": "user", "content": query})
 
         response = await self.groq_client.chat.completions.create(
-            model=self.config['advanced_model'],
+            model=self.config['advanced_model'] if not image_url else "llava-v1.5-7b-4096-preview",
             messages=messages
         )
         return response.choices[0].message.content
