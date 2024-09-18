@@ -13,7 +13,7 @@ class SnowCog(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot or not message.content.startswith(self.bot.command_prefix):
+        if message.author.bot:
             return
 
         ctx = await self.bot.get_context(message)
