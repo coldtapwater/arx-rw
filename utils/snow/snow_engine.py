@@ -138,7 +138,21 @@ class SnowEngine:
             response = await self.groq_client.chat.completions.create(
                 model="gemma-7b-it",
                 messages=[
-                    {"role": "system", "content": "You are a routing assistant. Determine if the query requires deep thinking or if it's casual conversation."},
+                    {"role": "system", "content": """You are a query classifier. Your task is to categorize incoming queries as either 'casual' or 'deep'.
+
+                    'Casual' queries include:
+                    - Greetings and small talk (e.g., "Hi there", "How are you?")
+                    - Simple questions with straightforward answers
+                    - Jokes or playful interactions
+                    - Brief, everyday conversations
+
+                    'Deep' queries include:
+                    - Requests for detailed explanations or analysis
+                    - Complex questions requiring research or in-depth knowledge
+                    - Philosophical or abstract topics
+                    - Multi-step problems or scenarios
+
+                    Respond with ONLY 'casual' or 'deep' based on the query."""},
                     {"role": "user", "content": f"Query: {query}\nIs this query asking for in-depth information, analysis, or research? Or is it a casual conversation, joke, or simple question?\nRespond with either 'casual' or 'deep'."}
                 ]
             )
@@ -149,8 +163,16 @@ class SnowEngine:
 
     async def process_casual_query(self, message: discord.Message, context: List[Dict[str, str]]) -> str:
         try:
-            response = await self.mixture_of_agents.process_query(message.content, context)
-            return self.format_casual_response(response)
+            response = await self.groq_client.chat.completions.create(
+                model="llama-3.1-8b-instant",  # Using a smaller, faster model for casual queries
+                messages=[
+                    {"role": "system", "content": self.config['casual_prompt']},
+                    *context[-2:],  # Only use the last turn of conversation for context
+                    {"role": "user", "content": message.content}
+                ],
+                max_tokens=50  # Limit the response length for casual queries
+            )
+            return self.format_casual_response(response.choices[0].message.content)
         except Exception as e:
             return f"Something went wrong: {e}"
 
