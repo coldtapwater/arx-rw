@@ -22,15 +22,18 @@ class SnowCog(commands.Cog):
 
         if self.bot.user.mentioned_in(message):
             async with message.channel.typing():
-                print(f"Message from {message.author}: {message.content}")
-                response = await self.snow_engine.process_message(message)
-                if response.startswith("data:image/png;base64,"):
-                    # It's a base64 encoded image, likely from LaTeX rendering
-                    image_data = base64.b64decode(response.split(',')[1])
-                    file = discord.File(io.BytesIO(image_data), filename="latex.png")
-                    await message.reply(file=file)
-                else:
-                    await message.reply(response)
+                try:
+                    print(f"Message from {message.author}: {message.content}")
+                    response = await self.snow_engine.process_message(message)
+                    if response.startswith("data:image/png;base64,"):
+                        # It's a base64 encoded image, likely from LaTeX rendering
+                        image_data = base64.b64decode(response.split(',')[1])
+                        file = discord.File(io.BytesIO(image_data), filename="latex.png")
+                        await message.reply(file=file)
+                    else:
+                        await message.reply(response)
+                except Exception as e:
+                    await message.reply(f"Error: {str(e)}")
 
     @commands.command(name='jailbreak')
     @commands.is_owner()
