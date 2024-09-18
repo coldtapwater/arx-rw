@@ -239,11 +239,12 @@ class SnowEngine:
 
     async def process_casual_query(self, message: discord.Message, context: List[Dict[str, str]]) -> str:
         try:
+            context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in context]
             response = await self.groq_client.chat.completions.create(
                 model="llama-3.1-8b-instant",  # Using a smaller, faster model for casual queries
                 messages=[
                     {"role": "system", "content": self.config['casual_prompt']},
-                    *context[-20:],  # Only use the last turn of conversation for context
+                    *context_messages,  # Only use the last turn of conversation for context
                     {"role": "user", "content": message.content}
                 ],
                 max_tokens=50  # Limit the response length for casual queries
@@ -254,8 +255,9 @@ class SnowEngine:
 
     async def process_deep_query(self, message: discord.Message, context: List[Dict[str, str]]) -> str:
         try:
-            initial_response = await self.mixture_of_agents.process_query(message.content, context)
-            final_response = await self.mixture_of_agents.reflect(message.content, initial_response, context)
+            context_messages = [{"role": msg["role"], "content": msg["content"]} for msg in context]
+            initial_response = await self.mixture_of_agents.process_query(message.content, context_messages)
+            final_response = await self.mixture_of_agents.reflect(message.content, initial_response, context_messages)
             return self.format_deep_response(final_response)
         except Exception as e:
             return f"Something went wrong: {e}"
