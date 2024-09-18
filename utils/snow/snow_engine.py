@@ -115,40 +115,52 @@ class SnowEngine:
         self.request_queue.start_processing(self.process_message)
 
     async def process_message(self, message: discord.Message) -> str:
-        is_safe = await self.llama_guard.check_message(message.content)
-        if not is_safe:
-            return "I'm sorry, but I can't respond to that kind of message."
+        try:
+            is_safe = await self.llama_guard.check_message(message.content)
+            if not is_safe:
+                return "I'm sorry, but I can't respond to that kind of message."
 
-        query_type = await self.route_query(message.content)
-        context = self.context_manager.get_context(message.author.id)
+            query_type = await self.route_query(message.content)
+            context = self.context_manager.get_context(message.author.id)
 
-        if query_type == "casual":
-            response = await self.process_casual_query(message, context)
-        else:
-            response = await self.process_deep_query(message, context)
+            if query_type == "casual":
+                response = await self.process_casual_query(message, context)
+            else:
+                response = await self.process_deep_query(message, context)
 
-        self.context_manager.add_context(message.author.id, message.content, response)
-        return response
+            self.context_manager.add_context(message.author.id, message.content, response)
+            return response
+        except Exception as e:
+            return f"Something went wrong: {e}"
 
     async def route_query(self, query: str) -> str:
-        response = await self.groq_client.chat.completions.create(
-            model="gemma-7b-it",
-            messages=[
-                {"role": "system", "content": "You are a routing assistant. Determine if the query requires deep thinking or if it's casual conversation."},
-                {"role": "user", "content": f"Query: {query}\nIs this query asking for in-depth information, analysis, or research? Or is it a casual conversation, joke, or simple question?\nRespond with either 'casual' or 'deep'."}
-            ]
-        )
-        decision = response.choices[0].message.content.strip().lower()
-        return "deep" if "deep" in decision else "casual"
+        try:
+            response = await self.groq_client.chat.completions.create(
+                model="gemma-7b-it",
+                messages=[
+                    {"role": "system", "content": "You are a routing assistant. Determine if the query requires deep thinking or if it's casual conversation."},
+                    {"role": "user", "content": f"Query: {query}\nIs this query asking for in-depth information, analysis, or research? Or is it a casual conversation, joke, or simple question?\nRespond with either 'casual' or 'deep'."}
+                ]
+            )
+            decision = response.choices[0].message.content.strip().lower()
+            return "deep" if "deep" in decision else "casual"
+        except Exception as e:
+            return f"Something went wrong: {e}"
 
     async def process_casual_query(self, message: discord.Message, context: List[Dict[str, str]]) -> str:
-        response = await self.mixture_of_agents.process_query(message.content, context)
-        return self.format_casual_response(response)
+        try:
+            response = await self.mixture_of_agents.process_query(message.content, context)
+            return self.format_casual_response(response)
+        except Exception as e:
+            return f"Something went wrong: {e}"
 
     async def process_deep_query(self, message: discord.Message, context: List[Dict[str, str]]) -> str:
-        initial_response = await self.mixture_of_agents.process_query(message.content, context)
-        final_response = await self.mixture_of_agents.reflect(message.content, initial_response, context)
-        return self.format_deep_response(final_response)
+        try:
+            initial_response = await self.mixture_of_agents.process_query(message.content, context)
+            final_response = await self.mixture_of_agents.reflect(message.content, initial_response, context)
+            return self.format_deep_response(final_response)
+        except Exception as e:
+            return f"Something went wrong: {e}"
 
     def format_casual_response(self, response: str) -> str:
         return response.lower()
