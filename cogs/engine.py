@@ -22,6 +22,7 @@ class SnowCog(commands.Cog):
 
         if self.bot.user.mentioned_in(message):
             async with message.channel.typing():
+                print(f"Message from {message.author}: {message.content}")
                 response = await self.snow_engine.process_message(message)
                 if response.startswith("data:image/png;base64,"):
                     # It's a base64 encoded image, likely from LaTeX rendering

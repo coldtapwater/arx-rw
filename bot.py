@@ -157,12 +157,12 @@ async def info(ctx):
     draw = ImageDraw.Draw(image)
 
     # Load and paste the logo
-    logo = Image.open(r"~/arx-rw/logo-arx.png")
+    logo = Image.open(r"logo-arx.png")
     logo = logo.resize((500, 500))  # Resize if necessary
     image.paste(logo, (width - 500, 0), logo if logo.mode == 'RGBA' else None)
 
     # Add the text
-    font = ImageFont.truetype(r"~/arx-rw/Gendy.otf", 20)  # Replace with path to a font file
+    font = ImageFont.truetype(r"Gendy.otf", 20)  # Replace with path to a font file
     y_text = 50
     for line in info:
         draw.text((52, y_text+2), line, font=font, fill=(0, 0, 0, 128))
