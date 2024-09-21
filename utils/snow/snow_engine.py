@@ -149,7 +149,18 @@ class MixtureOfAgents:
         return "\n".join(formatted) if formatted else "No tool results available."
 
     async def reflect(self, query: str, initial_response: str, context: List[Dict[str, str]]) -> str:
-        reflection_prompt = f"Reflect on the following query and initial response:\nQuery: {query}\nInitial Response: {initial_response}\nWhat aspects of the response could be improved or expanded upon?"
+        reflection_prompt = f"""Review your initial response to the following query:
+
+        Query: {query}
+
+        Initial Response: {initial_response}
+
+        Reflect on your answer with these considerations:
+
+	    •	Accuracy: Check for any factual errors or misconceptions.
+	    •	Completeness: Ensure all aspects of the query have been fully addressed.
+	    •	Clarity: Assess whether the explanation is clear and understandable to a broad audience.
+	    •	Depth: Determine if additional relevant information or examples could enhance the response."""
         messages = [{"role": "system", "content": self.config['reflection_prompt']}, {"role": "user", "content": reflection_prompt}]
         
         reflection_response = await self.groq_client.chat.completions.create(
@@ -161,7 +172,8 @@ class MixtureOfAgents:
 
         await asyncio.sleep(15)  # 15-second delay between reflection rounds
 
-        improvement_prompt = f"Based on the reflection: {reflection}\nProvide an improved and expanded answer to the original query: '{query}'. Focus on making the content more digestible for everyone while retaining technical aspects."
+        improvement_prompt = f"Based on your reflection: {reflection}, provide an improved and expanded answer to the original query, making sure it is accurate, comprehensive, and accessible.
+        \n\nRevised Answer:"
         messages = [{"role": "system", "content": self.config['improvement_prompt']}, {"role": "user", "content": improvement_prompt}]
         
         improved_response = await self.groq_client.chat.completions.create(
