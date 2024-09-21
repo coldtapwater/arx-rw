@@ -172,8 +172,7 @@ class MixtureOfAgents:
 
         await asyncio.sleep(15)  # 15-second delay between reflection rounds
 
-        improvement_prompt = f"Based on your reflection: {reflection}, provide an improved and expanded answer to the original query, making sure it is accurate, comprehensive, and accessible.
-        \n\nRevised Answer:"
+        improvement_prompt = f"Based on your reflection: {reflection}, provide an improved and expanded answer to the original query, making sure it is accurate, comprehensive, and accessible.\n\nRevised Answer: "
         messages = [{"role": "system", "content": self.config['improvement_prompt']}, {"role": "user", "content": improvement_prompt}]
         
         improved_response = await self.groq_client.chat.completions.create(
