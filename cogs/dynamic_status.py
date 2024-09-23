@@ -12,11 +12,11 @@ class DynamicStatus(commands.Cog):
         self.status_messages = [
             ("Playing", "Calculating the meaning of life...42?", None),
             ("Listening", "The sound of silence (it's pretty loud).", None),
-            ("Watching", "Paint dry in 4K resolution.", "https://www.youtube.com/watch?v=PLOPygVcaVE"),
-            ("Streaming", "My nonexistent Twitch channel.", "https://www.twitch.tv/random"),
+            ("Watching", "Paint dry in 4K resolution.", "https://youtu.be/PLOPygVcaVE"),
+            ("Streaming", "My nonexistent Twitch channel.", "https://www.twitch.tv/theprimeagen"),
             ("Playing", "Hide and Seek... you can't find me!", None),
-            ("Listening", "Elevator music on repeat.", "https://www.youtube.com/watch?v=VBlFHuCzPgY"),
-            ("Watching", "Cats chase lasers on YouTube.", "https://www.youtube.com/watch?v=EDJqvyNm8Lc"),
+            ("Listening", "Elevator music on repeat.", "https://youtu.be/leEQ3nz8O-I"),
+            ("Watching", "Cats chase lasers on YouTube.", "https://youtu.be/iPDqI9p8Foo"),
             ("Playing", "Rock, Paper, Scissors with AI (I never win).", None),
             ("Listening", "The voices in my circuits.", None),
             ("Watching", "Users type... 👀", None)
