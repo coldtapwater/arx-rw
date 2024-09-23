@@ -284,6 +284,7 @@ class SnowEngine:
 
                     'Casual' queries include:
                     - Greetings and small talk (e.g., "Hi there", "How are you?")
+                    - Random interactions where the user is not asking a question but rather just interacting with the bot
                     - Simple questions with straightforward answers
                     - Jokes or playful interactions like games (20-questions)
                     - Brief, everyday conversations
@@ -299,8 +300,11 @@ class SnowEngine:
                     - Complex questions requiring research or in-depth knowledge
                     - Philosophical or abstract topics
                     - Multi-step problems or scenarios
+                    - Specifically asking you to utilize Deep Snow, Deep Thinking, or Deep Learning.
 
                     For example a query like: "What is the meaning of life?" would be categorized as 'deep' since it requires deep knowledge like reasoning, planning, and analysis. Another example would be: "What historical firgure is best known for the laws of Physics" would be categorized as 'deep' since it requires deep knowledge like logic, potential tool calls, and expansion of the explanation.
+
+                    For the most part you should use the 'casual' query classifier. It should adequately answer and engage with the user's query.
 
                     Respond with ONLY 'casual' or 'deep' based on the query."""},
                     {"role": "user", "content": f"Query: {query}\nIs this query asking for in-depth information, analysis, or research? Or is it a casual conversation, joke, or simple question?\nRespond with either 'casual' or 'deep'."}

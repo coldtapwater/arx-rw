@@ -87,7 +87,7 @@ class SnowCog(commands.Cog):
                 try:
                     print(f"Message from {message.author}: {message.content}")
                     response = await self.snow_engine.process_message(message)
-                    handler = MessageHandler(self.bot, message, response, f"Response for {message.author.mention}")
+                    handler = MessageHandler(self.bot, message, response, f"Response for {message.author}")
                     if response.startswith("data:image/png;base64,"):
                         # It's a base64 encoded image, likely from LaTeX rendering
                         image_data = base64.b64decode(response.split(',')[1])
