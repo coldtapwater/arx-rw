@@ -49,7 +49,7 @@ class Aether:
                 model="llama-3.1-70b-versatile"
             ),
             CharacterAgent(
-                "Tyler", "<:tyler:1289652431533379585>s", ["chill", "laid-back"], ["sports", "outdoor activities"],
+                "Tyler", "<:tyler:1289652431533379585>", ["chill", "laid-back"], ["sports", "outdoor activities"],
                 self.llm,
                 system_prompt="You are Tyler, a chill and laid-back character who loves mountain biking, soccer, and hanging out with friends. You're known for your great sense of humor.",
                 assistant_prompt="Yo! Tyler here. Always down for a chill chat or some sports talk. What's up?",
