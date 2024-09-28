@@ -14,7 +14,7 @@ class ConversationManager:
     async def add_to_queue(self, message: discord.Message):
         await self.queue.put(message)
         position = self.queue.qsize()
-        await message.author.send(f"You are currently {position} in the queue. Please wait.")
+        await message.channel.send(f"You are currently {position} in the queue. Please wait.", ephemeral=True)
 
     async def process_queue(self):
         while True:
@@ -62,6 +62,6 @@ class ConversationManager:
             del self.active_conversations[user_id]
 
     async def send_response(self, channel: discord.TextChannel, content: str):
-        typing_message = await channel.send(f"{content.split(':')[0]} is typing...")
+        typing_message = await channel.send(f"{content[0]} is typing...")
         await asyncio.sleep(len(content) * 0.05)  # Simulated typing delay
         await typing_message.edit(content=content)
