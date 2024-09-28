@@ -132,6 +132,17 @@ class Moderation(commands.Cog):
     @commands.command()
     @utils.checks.blacklist_check()
     @commands.has_permissions(manage_messages=True)
+    async def purge(self, ctx, limit: int, member: discord.Member = None):
+        """Bulk delete messages from a member or the whole server."""
+        try:
+            deleted = await ctx.channel.purge(limit=limit, check=lambda m: m.author == member if member else True)
+            await ctx.send(f"Deleted {len(deleted)} message{'s' if len(deleted) > 1 else ''} from {member if member else 'the channel'}.")
+        except discord.Forbidden:
+            await ctx.send("I don't have permission to delete messages.")
+
+    @commands.command()
+    @utils.checks.blacklist_check()
+    @commands.has_permissions(manage_messages=True)
     async def modlogs(self, ctx, member: discord.Member = None):
         """View moderation logs for a member or the whole server."""
         try:
