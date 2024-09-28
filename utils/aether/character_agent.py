@@ -37,7 +37,7 @@ class CharacterAgent:
         response = await self.llm.chat.completions.create(
             model=self.model,  # You can adjust the model as needed
             messages=messages,
-            max_tokens=100  # Adjust as needed for your desired response length
+            max_tokens=1000  # Adjust as needed for your desired response length
         )
         return response.choices[0].message.content
 

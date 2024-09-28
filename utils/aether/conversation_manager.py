@@ -62,6 +62,6 @@ class ConversationManager:
             del self.active_conversations[user_id]
 
     async def send_response(self, channel: discord.TextChannel, content: str):
-        typing_message = await channel.send(f"{content[0]} is typing...")
+        typing_message = await channel.send(f"{content} is typing...")
         await asyncio.sleep(len(content) * 0.05)  # Simulated typing delay
         await typing_message.edit(content=content)
