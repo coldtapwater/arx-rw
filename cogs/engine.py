@@ -105,8 +105,9 @@ class AetherAI(commands.Cog):
         
         if message.content.startswith("arx") or message.content.startswith("Arx") or message.content.startswith("ARX") or message.content.__contains__("Arx") or message.content.__contains__("arx"):
             try:
-                response = await self.generate_response(message.content)
-                await message.reply(response)
+                async with message.channel.typing():
+                    response = await self.generate_response(message.content)
+                    await message.reply(response)
             except Exception as e:
                 await message.reply(f"I ran into a wall...\n-# Error: {e}")
 
