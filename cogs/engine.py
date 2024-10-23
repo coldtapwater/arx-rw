@@ -1,7 +1,7 @@
 from sre_constants import IN
 import discord
 from discord.ext import commands
-from ollama import Client
+from ollama import AsyncClient
 
 import bot
 
@@ -83,12 +83,13 @@ Arx: “First, vibe check. Are we feeling chaotic or focused today? Either way, 
 class AetherAI(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.client = Client()
+        self.client = AsyncClient()
 
     async def generate_response(self, prompt: str):
-        if prompt is not str:
+        if not isinstance(prompt, str):
             return ""
-        response = self.client.chat(
+
+        response = await self.client.chat(
         model="granite3-moe",
         messages = [
         {"role": "system", "content": sysPrompt},
