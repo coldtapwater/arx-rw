@@ -3,6 +3,8 @@ import discord
 from discord.ext import commands
 from ollama import AsyncClient
 
+import bot
+
 
 sysPrompt = """
 
@@ -32,7 +34,11 @@ class AetherAI(commands.Cog):
         if message.author.bot:
             return
         
-        
+        if self.bot.user.mentioned_in(message):
+            try:
+                await message.reply(await self.generate_response(message.content))
+            except Exception as e:
+                await message.reply(f"I ran into a wall...\n-# Error: {e}")
 
     # You can add more commands here if needed
 
