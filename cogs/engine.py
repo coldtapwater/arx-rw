@@ -102,9 +102,10 @@ class AetherAI(commands.Cog):
         if message.author.bot:
             return
         
-        if self.bot.user.mentioned_in(message):
+        if message.content.startswith("arx") or message.content.startswith("Arx") or message.content.startswith("ARX") or message.content.__contains__("Arx") or message.content.__contains__("arx"):
             try:
-                await message.reply(await self.generate_response(message.content))
+                response = await self.generate_response(message.content)
+                await message.reply(response)
             except Exception as e:
                 await message.reply(f"I ran into a wall...\n-# Error: {e}")
 
