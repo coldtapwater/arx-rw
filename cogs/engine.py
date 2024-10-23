@@ -1,26 +1,38 @@
+from sre_constants import IN
 import discord
 from discord.ext import commands
-from utils.aether.aether import Aether
+from ollama import AsyncClient
 
+
+sysPrompt = """
+
+    """
+cusPrompt = """
+
+    """
 class AetherAI(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.snow_engine = Aether(bot)
+        self.client = AsyncClient()
 
-    async def cog_load(self):
-        await self.snow_engine.start()
+    async def generate_response(self, prompt: str):
+        if prompt is not str:
+            return ""
+        response = await self.client.chat(
+        model="granite3-moe",
+        messages = [
+        {"role": "system", "content": sysPrompt},
+        {"role": "assistant", "content": cusPrompt},
+        {"role": "user", "content": prompt},
+        ])
+        return response.get("content")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot:
             return
-
-        ctx = await self.bot.get_context(message)
-        if ctx.valid:
-            return
-
-        if self.bot.user.mentioned_in(message):
-            await self.snow_engine.process_message(message)
+        
+        
 
     # You can add more commands here if needed
 

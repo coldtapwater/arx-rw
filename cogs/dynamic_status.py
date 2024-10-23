@@ -23,9 +23,6 @@ class DynamicStatus(commands.Cog):
         ]
         self.change_status.start()
 
-    def cog_unload(self):
-        self.change_status.cancel()
-
     @tasks.loop(minutes=10)  # Change status every 10 minutes
     async def change_status(self):
         status_type, status_message, url = random.choice(self.status_messages)
